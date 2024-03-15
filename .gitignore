@@ -1,2 +1,6 @@
 # Files
 .DS_Store
+.env
+
+# Directories
+course_scheduling/__pycache__/
