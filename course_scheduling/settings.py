@@ -44,7 +44,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     "authentication.apps.AccountsConfig",
-    "polls.apps.PollsConfig",
+    "core.apps.CoreConfig",
     # authentication apps
     "rest_framework",
     "rest_framework.authtoken",
