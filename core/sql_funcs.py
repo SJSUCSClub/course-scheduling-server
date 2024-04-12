@@ -1,8 +1,14 @@
 import json
+import datetime
 from django.db import connection
 
 
 ''' A list of key value pairs for each item in a row and its corresponding column name'''
+
+
+def default(o):
+    if isinstance(o, (datetime.date, datetime.datetime)):
+        return o.isoformat()
 
 
 def dictionify(data, rows, fetchall=True):
@@ -14,14 +20,14 @@ def dictionify(data, rows, fetchall=True):
     else:
         json_data = dict(zip(rows, data))
 
-    return json_data
+    json_dump = json.dumps(json_data, default=default)
+    return json.loads(json_dump)
 
 
 def run_sql(query, col_tuples=None):
     with connection.cursor() as cursor:
         if col_tuples is not None:
             # print(query, col_tuples)
-            print(type(col_tuples))
             cursor.execute(query, params=col_tuples)
         else:
             cursor.execute(query)
@@ -90,6 +96,46 @@ def row_merge(objs):
     first = objs[0]
 
     for i in range(1, len(objs)):
-        first = first.extend(objs[i])
+        first = merge(first, objs[i])
 
-    return json.dumps(first)
+    return first
+
+
+def merge(json1, json2):
+    for key in json2.keys():
+        json1[key] = json2[key]
+
+    return json1
+    # with connection.cursor() as cursor:
+    #     if id is not None:
+    #         cursor.execute(
+    #             "SELECT * FROM Schedules WHERE class_number=%s", [id])
+    #         rows = [x[0] for x in cursor.description]
+    #         schedules = cursor.fetchone()
+    #         # print(schedules[14])
+
+    #         ''' Querying for professors per schedule '''
+
+    #         json_data = dict(zip(rows, schedules))
+
+    #     else:
+    #         cursor.execute("SELECT * FROM Schedules")
+    #         rows = [x[0] for x in cursor.description]
+    #         schedules = cursor.fetchall()
+    #         json_data = []
+    #         for result in schedules:
+    #             # json_data = dict(zip(rows, all_courses))
+    #             json_data.append(dict(zip(rows, result)))
+    # print(json_data)
+
+    # with connection.cursor() as cursor:
+    #     cursor.execute("SELECT * FROM Courses")
+    #     all_courses = cursor.fetchall()
+    #     rows = [x[0] for x in cursor.description]
+
+    # json_data = []
+    # for result in all_courses:
+    #     # json_data = dict(zip(rows, all_courses))
+    #     json_data.append(dict(zip(rows, result)))
+
+    # print(json_data[0])
