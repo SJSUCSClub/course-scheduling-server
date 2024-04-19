@@ -9,5 +9,7 @@ urlpatterns = [
     path('courses/review_stats/', views.review_stats),
     path('courses/summary/', views.summary),
     path('courses/reviews/comments', views.review_comments),
-    path('courses/schedules/', views.sql_schedules)
+    path('courses/schedules/', views.sql_schedules),
+
+    path('users/reviews',views.post_review)
 ]

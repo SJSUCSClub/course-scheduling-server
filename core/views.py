@@ -198,7 +198,12 @@ def auxiliary_json(dept, csn):
 
     return final_json
 
-
+@api_view(['POST'])
+def post_review(request):
+    json_data = request.body.decode('utf-8')
+    data = json.loads(json_data)
+    print(data['tags'])
+    return JsonResponse({"message":"something happened"})
 # @api_view(['GET'])
 # def courses(request):
 #     if request.method == 'GET':
