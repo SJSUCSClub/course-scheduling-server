@@ -139,3 +139,19 @@ def merge(json1, json2):
     #     json_data.append(dict(zip(rows, result)))
 
     # print(json_data[0])
+
+# insert statements
+#INSERT INTO reviews (department, content, quality, difficulty, grade, take_again) VALUES (${user_id}, ${data.professor_id}, '${course_number}', '${department}', ${escapedContent}, ${data.quality}, ${data.difficulty},  ${grade}, ${data.take_again});
+
+def insert(table, columns):
+    select_cols = ','.join(columns)
+    values = str(list(columns.values()))[1:-1]
+    values = values.replace(" \"[", "[").replace("]\"", "]::tag_enum[]")
+    if "[" in values:
+        index = values.index("[")
+        values = values[:index] + "ARRAY" + values[index:]
+
+    query = f'INSERT INTO {table}({select_cols}) VALUES ({values})'
+    with connection.cursor() as cursor:
+        cursor.execute(query)
+        return {"message":f"{cursor.rowcount} row(s) were changed"}
