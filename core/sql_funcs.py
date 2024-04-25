@@ -31,10 +31,13 @@ def run_sql(query, col_tuples=None):
             cursor.execute(query, params=col_tuples)
         else:
             cursor.execute(query)
-        data = cursor.fetchall()
-        rows = [x[0] for x in cursor.description]
-
+        try:
+            data = cursor.fetchall()
+            rows = [x[0] for x in cursor.description]
+        except:
+            return {"message": f"{cursor.rowcount} row(s) were changed"}
     return data, rows
+        
 
 
 ''' For all "Select *" queries '''
@@ -140,18 +143,46 @@ def merge(json1, json2):
 
     # print(json_data[0])
 
+
+def tags(value):
+    value = value.replace("[","{").replace("]","}").replace("'","")
+    return value
 # insert statements
 #INSERT INTO reviews (department, content, quality, difficulty, grade, take_again) VALUES (${user_id}, ${data.professor_id}, '${course_number}', '${department}', ${escapedContent}, ${data.quality}, ${data.difficulty},  ${grade}, ${data.take_again});
 
 def insert(table, columns):
-    select_cols = ','.join(columns)
-    values = str(list(columns.values()))[1:-1]
-    values = values.replace(" \"[", "[").replace("]\"", "]::tag_enum[]")
-    if "[" in values:
-        index = values.index("[")
-        values = values[:index] + "ARRAY" + values[index:]
+    select_cols = ','.join(columns.keys())
+    placeholders = ','.join(['%s'] * len(columns))
+    query = f'INSERT INTO {table}({select_cols}) VALUES ({placeholders})'
+    if 'tags' in columns:
+        columns["tags"] = tags(columns["tags"])
+    values = tuple(columns.values())
 
-    query = f'INSERT INTO {table}({select_cols}) VALUES ({values})'
-    with connection.cursor() as cursor:
-        cursor.execute(query)
-        return {"message":f"{cursor.rowcount} row(s) were changed"}
+    return run_sql(query,values)
+
+# def update(table, columns):
+#     select_cols = ','.join(columns.keys())
+#     placeholders = ','.join(['%s'] * len(columns))
+#     query = f'INSERT INTO {table}({select_cols}) VALUES ({placeholders})'
+#     columns["tags"] = tags(columns["tags"])
+#     values = tuple(columns.values())
+
+#     return run_sql(query,values)
+
+#     query = f'INSERT INTO {table}({select_cols}) VALUES ({values})'
+#     with connection.cursor() as cursor:
+#         cursor.execute(query)
+#         return {"message":f"{cursor.rowcount} row(s) were changed"}
+    
+# def delete(table, column):
+#     select_cols = ','.join(columns)
+#     values = str(list(columns.values()))[1:-1]
+#     values = values.replace(" \"[", "[").replace("]\"", "]::tag_enum[]")
+#     if "[" in values:
+#         index = values.index("[")
+#         values = values[:index] + "ARRAY" + values[index:]
+
+#     query = f'INSERT INTO {table}({select_cols}) VALUES ({values})'
+#     with connection.cursor() as cursor:
+#         cursor.execute(query)
+#         return {"message":f"{cursor.rowcount} row(s) were changed"}

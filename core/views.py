@@ -203,10 +203,42 @@ def auxiliary_json(dept, csn):
 def post_review(request):
     if request.user.is_authenticated:
         user_id = request.user.email[0:-9]
-        # user_id = "anonymous"
         json_data = request.body.decode('utf-8')
         data = json.loads(json_data)
         results = insert('reviews',{'user_id':user_id, 'professor_id':data["professor_id"], 'course_number':data["course_number"],'department':data["department"],'content':data["content"],'quality':data['quality'],'ease':data['ease'],'grade':data['grade'],'take_again':data['take_again'],'tags':data['tags'],'is_user_anonymous':data['is_user_anonymous']})
+        return JsonResponse(results, safe=False)
+    
+    return JsonResponse({"message": "User is not authenticated"}, status=status.HTTP_404_NOT_FOUND)
+
+@api_view(['POST'])
+def post_comment(request):
+    if request.user.is_authenticated:
+        user_id = request.user.email[0:-9]
+        json_data = request.body.decode('utf-8')
+        data = json.loads(json_data)
+        results = insert('comments',{'user_id':user_id, 'review_id':data["review_id"], 'content':data["content"]})
+        return JsonResponse(results, safe=False)
+    
+    return JsonResponse({"message": "User is not authenticated"}, status=status.HTTP_404_NOT_FOUND)
+
+@api_view(['POST'])
+def post_flagged_review(request):
+    if request.user.is_authenticated:
+        user_id = request.user.email[0:-9]
+        json_data = request.body.decode('utf-8')
+        data = json.loads(json_data)
+        results = insert('flag_reviews',{'user_id':user_id, 'review_id':data["review_id"], 'reason':data["reason"]})
+        return JsonResponse(results, safe=False)
+    
+    return JsonResponse({"message": "User is not authenticated"}, status=status.HTTP_404_NOT_FOUND)
+
+@api_view(['POST'])
+def post_vote(request):
+    if request.user.is_authenticated:
+        user_id = request.user.email[0:-9]
+        json_data = request.body.decode('utf-8')
+        data = json.loads(json_data)
+        results = insert('votes',{'user_id':user_id, 'review_id':data["review_id"], 'vote':data["vote"]})
         return JsonResponse(results, safe=False)
     
     return JsonResponse({"message": "User is not authenticated"}, status=status.HTTP_404_NOT_FOUND)
