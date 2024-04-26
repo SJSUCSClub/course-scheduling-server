@@ -1,6 +1,5 @@
 from django.shortcuts import render
 import json
-import jwt
 from core.sql_funcs import *
 from django.http.response import JsonResponse
 from rest_framework.parsers import JSONParser
@@ -10,6 +9,7 @@ from core.models import Users, Courses, Reviews, Schedules
 # from core.serializers import CourseSerialized, UsersSerialized, ReviewsSerialized, ReviewCommentsSerialized, SchedulesSerialized
 from rest_framework.decorators import api_view
 from django.http import HttpResponse
+from datetime import datetime
 
 
 def index(request):
@@ -199,6 +199,7 @@ def auxiliary_json(dept, csn):
 
     return final_json
 
+#@permission_classes([IsAuthenticated]) 
 @api_view(['POST'])
 def post_review(request):
     if request.user.is_authenticated:
@@ -208,6 +209,28 @@ def post_review(request):
         results = insert('reviews',{'user_id':user_id, 'professor_id':data["professor_id"], 'course_number':data["course_number"],'department':data["department"],'content':data["content"],'quality':data['quality'],'ease':data['ease'],'grade':data['grade'],'take_again':data['take_again'],'tags':data['tags'],'is_user_anonymous':data['is_user_anonymous']})
         return JsonResponse(results, safe=False)
     
+    return JsonResponse({"message": "User is not authenticated"}, status=status.HTTP_404_NOT_FOUND)
+
+def put_review(request,review_id):
+    user_id = request.user.email[0:-9]
+    json_data = request.body.decode('utf-8')
+    data = json.loads(json_data)
+    results = update('reviews',{'content':data["content"],'quality':data['quality'],'ease':data['ease'],'grade':data['grade'],'take_again':data['take_again'],'tags':data['tags'],'is_user_anonymous':data['is_user_anonymous']},{'user_id':user_id,'id':review_id})
+    return JsonResponse(results, safe=False)
+
+
+def delete_review(request,review_id):
+    user_id = request.user.email[0:-9]
+    results = delete('reviews',{'user_id':user_id,'id':review_id})
+    return JsonResponse(results, safe=False)
+
+@api_view(['PUT','DELETE'])
+def review_query(request,review_id):
+    if request.user.is_authenticated:
+        if request.method == 'PUT': 
+            return put_review(request,review_id) 
+        elif request.method == 'DELETE':
+            return delete_review(request,review_id)
     return JsonResponse({"message": "User is not authenticated"}, status=status.HTTP_404_NOT_FOUND)
 
 @api_view(['POST'])
@@ -221,6 +244,31 @@ def post_comment(request):
     
     return JsonResponse({"message": "User is not authenticated"}, status=status.HTTP_404_NOT_FOUND)
 
+def put_comment(request):
+    review_id = request.GET.get('review_id')
+    comment_id = request.GET.get('comment_id')
+    user_id = request.user.email[0:-9]
+    json_data = request.body.decode('utf-8')
+    data = json.loads(json_data)
+    results = update('comments',{'content':data["content"],"updated_at":datetime.now()},{'user_id':user_id,'review_id':review_id,'id':comment_id})
+    return JsonResponse(results, safe=False)
+    
+def delete_comment(request):
+    review_id = request.GET.get('review_id')
+    comment_id = request.GET.get('comment_id')
+    user_id = request.user.email[0:-9]
+    results = delete('comments',{'user_id':user_id,'review_id':review_id,'id':comment_id})
+    return JsonResponse(results, safe=False)
+
+@api_view(['PUT','DELETE'])
+def comment_query(request):
+    if request.user.is_authenticated:
+        if request.method == 'PUT': 
+            return put_comment(request) 
+        elif request.method == 'DELETE':
+            return delete_comment(request)
+    return JsonResponse({"message": "User is not authenticated"}, status=status.HTTP_404_NOT_FOUND)
+
 @api_view(['POST'])
 def post_flagged_review(request):
     if request.user.is_authenticated:
@@ -230,6 +278,31 @@ def post_flagged_review(request):
         results = insert('flag_reviews',{'user_id':user_id, 'review_id':data["review_id"], 'reason':data["reason"]})
         return JsonResponse(results, safe=False)
     
+    return JsonResponse({"message": "User is not authenticated"}, status=status.HTTP_404_NOT_FOUND)
+
+def put_flag(request):
+    review_id = request.GET.get('review_id')
+    flag_id = request.GET.get('flag_id')
+    user_id = request.user.email[0:-9]
+    json_data = request.body.decode('utf-8')
+    data = json.loads(json_data)
+    results = update('flag_reviews',{'reason':data["reason"],"updated_at":datetime.now()},{'user_id':user_id,'review_id':review_id,'id':flag_id})
+    return JsonResponse(results, safe=False)
+
+def delete_flag(request):
+    review_id = request.GET.get('review_id')
+    flag_id = request.GET.get('flag_id')
+    user_id = request.user.email[0:-9]
+    results = delete('flag_reviews',{'user_id':user_id,'review_id':review_id,'id':flag_id})
+    return JsonResponse(results, safe=False)
+
+@api_view(['PUT','DELETE'])
+def flagged_query(request):
+    if request.user.is_authenticated:
+        if request.method == 'PUT': 
+            return put_flag(request) 
+        elif request.method == 'DELETE':
+            return delete_flag(request)
     return JsonResponse({"message": "User is not authenticated"}, status=status.HTTP_404_NOT_FOUND)
 
 @api_view(['POST'])
@@ -242,6 +315,33 @@ def post_vote(request):
         return JsonResponse(results, safe=False)
     
     return JsonResponse({"message": "User is not authenticated"}, status=status.HTTP_404_NOT_FOUND)
+
+def put_vote(request):
+    if request.user.is_authenticated:
+        review_id = request.GET.get('review_id')
+        user_id = request.user.email[0:-9]
+        json_data = request.body.decode('utf-8')
+        data = json.loads(json_data)
+        results = update('votes',{'vote':data["vote"]},{'user_id':user_id,'review_id':review_id})
+        return JsonResponse(results, safe=False)
+    
+    return JsonResponse({"message": "User is not authenticated"}, status=status.HTTP_404_NOT_FOUND)
+
+def delete_vote(request):
+    review_id = request.GET.get('review_id')
+    user_id = request.user.email[0:-9]
+    results = delete('votes',{'user_id':user_id,'review_id':review_id})
+    return JsonResponse(results, safe=False)
+
+@api_view(['PUT','DELETE'])
+def vote_query(request):
+    if request.user.is_authenticated:
+        if request.method == 'PUT': 
+            return put_vote(request) 
+        elif request.method == 'DELETE':
+            return delete_vote(request)
+    return JsonResponse({"message": "User is not authenticated"}, status=status.HTTP_404_NOT_FOUND)
+
 
 # @api_view(['GET'])
 # def courses(request):

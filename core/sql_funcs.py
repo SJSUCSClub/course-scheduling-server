@@ -26,16 +26,18 @@ def dictionify(data, rows, fetchall=True):
 
 def run_sql(query, col_tuples=None):
     with connection.cursor() as cursor:
+        rows_changed = 0
         if col_tuples is not None:
             # print(query, col_tuples)
             cursor.execute(query, params=col_tuples)
         else:
             cursor.execute(query)
         try:
+            rows_changed = cursor.rowcount
             data = cursor.fetchall()
             rows = [x[0] for x in cursor.description]
         except:
-            return {"message": f"{cursor.rowcount} row(s) were changed"}
+            return {"message": f"{rows_changed} row(s) were changed"}
     return data, rows
         
 
@@ -156,33 +158,34 @@ def insert(table, columns):
     query = f'INSERT INTO {table}({select_cols}) VALUES ({placeholders})'
     if 'tags' in columns:
         columns["tags"] = tags(columns["tags"])
-    values = tuple(columns.values())
+    col_tuple = tuple(columns.values())
 
-    return run_sql(query,values)
+    return run_sql(query,col_tuple)
 
-# def update(table, columns):
-#     select_cols = ','.join(columns.keys())
-#     placeholders = ','.join(['%s'] * len(columns))
-#     query = f'INSERT INTO {table}({select_cols}) VALUES ({placeholders})'
-#     columns["tags"] = tags(columns["tags"])
-#     values = tuple(columns.values())
+def update(table,columns,where):
+    col_tuple = tuple()
+    if 'tags' in columns:
+        columns["tags"] = tags(columns["tags"])
+    keys = list(columns.keys())
+    conditions = list(where)
+    query = f'UPDATE {table} SET '
+    for key in keys:
+        query+= key + " = %s, "
+        col_tuple+= (columns[key],)
+    query = query.rstrip(", ")
+    query += " WHERE "
+    for condition in conditions:
+        query+= condition + " = %s AND "
+        col_tuple+=(where[condition],)
+    query = query.rstrip("AND ")
+    return run_sql(query,col_tuple)
 
-#     return run_sql(query,values)
-
-#     query = f'INSERT INTO {table}({select_cols}) VALUES ({values})'
-#     with connection.cursor() as cursor:
-#         cursor.execute(query)
-#         return {"message":f"{cursor.rowcount} row(s) were changed"}
-    
-# def delete(table, column):
-#     select_cols = ','.join(columns)
-#     values = str(list(columns.values()))[1:-1]
-#     values = values.replace(" \"[", "[").replace("]\"", "]::tag_enum[]")
-#     if "[" in values:
-#         index = values.index("[")
-#         values = values[:index] + "ARRAY" + values[index:]
-
-#     query = f'INSERT INTO {table}({select_cols}) VALUES ({values})'
-#     with connection.cursor() as cursor:
-#         cursor.execute(query)
-#         return {"message":f"{cursor.rowcount} row(s) were changed"}
+def delete(table,columns):
+    col_tuple = tuple()
+    query = f'DELETE FROM {table} WHERE '
+    keys = list(columns.keys())
+    for key in keys:
+        query+= key + " = %s AND "
+        col_tuple+= (columns[key],)
+    query = query.rstrip("AND ")
+    return run_sql(query,col_tuple)
