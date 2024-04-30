@@ -26,21 +26,23 @@ def dictionify(data, rows, fetchall=True):
 
 def run_sql(query, col_tuples=None):
     with connection.cursor() as cursor:
-        rows_changed = 0
         if col_tuples is not None:
-            # print(query, col_tuples)
             cursor.execute(query, params=col_tuples)
         else:
             cursor.execute(query)
-        try:
-            rows_changed = cursor.rowcount
-            data = cursor.fetchall()
-            rows = [x[0] for x in cursor.description]
-        except:
-            return {"message": f"{rows_changed} row(s) were changed"}
+        data = cursor.fetchall()
+        rows = [x[0] for x in cursor.description]
+            
     return data, rows
         
-
+def run_change_sql(query,col_tuples=None):
+    with connection.cursor() as cursor:
+        if col_tuples is not None:
+            cursor.execute(query, params=col_tuples)
+        else:
+            cursor.execute(query)
+        rows_changed = cursor.rowcount
+        return {"message": f"{rows_changed} row(s) were changed"}
 
 ''' For all "Select *" queries '''
 
@@ -145,12 +147,14 @@ def merge(json1, json2):
 
     # print(json_data[0])
 
+def calculate_votes(table,columns):
+    col_tuple = tuple(columns.values())
+    query = f"SELECT SUM(CASE WHEN vote = true THEN 1 ELSE 0 END) AS upvotes, SUM(CASE WHEN vote = false THEN 1 ELSE 0 END) AS downvotes FROM {table} WHERE user_id = %s AND review_id = %s"
+    return run_sql(query,col_tuple)
 
 def tags(value):
     value = value.replace("[","{").replace("]","}").replace("'","")
     return value
-# insert statements
-#INSERT INTO reviews (department, content, quality, difficulty, grade, take_again) VALUES (${user_id}, ${data.professor_id}, '${course_number}', '${department}', ${escapedContent}, ${data.quality}, ${data.difficulty},  ${grade}, ${data.take_again});
 
 def insert(table, columns):
     select_cols = ','.join(columns.keys())
@@ -160,7 +164,7 @@ def insert(table, columns):
         columns["tags"] = tags(columns["tags"])
     col_tuple = tuple(columns.values())
 
-    return run_sql(query,col_tuple)
+    return run_change_sql(query,col_tuple)
 
 def update(table,columns,where):
     col_tuple = tuple()
@@ -178,7 +182,7 @@ def update(table,columns,where):
         query+= condition + " = %s AND "
         col_tuple+=(where[condition],)
     query = query.rstrip("AND ")
-    return run_sql(query,col_tuple)
+    return run_change_sql(query,col_tuple)
 
 def delete(table,columns):
     col_tuple = tuple()
@@ -188,4 +192,4 @@ def delete(table,columns):
         query+= key + " = %s AND "
         col_tuple+= (columns[key],)
     query = query.rstrip("AND ")
-    return run_sql(query,col_tuple)
+    return run_change_sql(query,col_tuple)
