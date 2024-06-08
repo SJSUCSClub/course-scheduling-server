@@ -1,6 +1,9 @@
 # Files
 .DS_Store
 .env
-
+client_secret.json
 # Directories
 course_scheduling/__pycache__/
+
+
+

@@ -16,7 +16,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 load_dotenv()
-SITE_ID = 1
+SITE_ID = 0
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -35,6 +35,14 @@ ALLOWED_HOSTS = []
 # Application definition
 ACCOUNT_EMAIL_VERIFICATION = "none"
 
+if DEBUG:
+    CORS_ALLOW_ALL_ORIGINS = True
+else:
+    CORS_ALLOWED_ORIGINS = [
+        "http://localhost:3000/",
+        "http://127.0.0.1:3000/",
+    ]
+
 INSTALLED_APPS = [
     'django.contrib.admin',
     "django.contrib.sites",
@@ -48,12 +56,17 @@ INSTALLED_APPS = [
     # authentication apps
     "rest_framework",
     "rest_framework.authtoken",
+    'rest_auth',
+    'rest_auth.registration',
     "rest_framework_simplejwt",
     "allauth",
     "allauth.account",
     "allauth.socialaccount",
     "corsheaders",
     "allauth.socialaccount.providers.google",
+    "google.oauth2",
+    "google_auth_oauthlib",
+    "googleapiclient"
 ]
 
 MIDDLEWARE = [
@@ -151,31 +164,34 @@ REST_AUTH = {
     "JWT_AUTH_HTTPONLY": False,
 }
 
-if DEBUG:
-    CORS_ALLOW_ALL_ORIGINS = True
-else:
-    CORS_ALLOWED_ORIGINS = [
-        "http://localhost:3000/",
-        "http://127.0.0.1:3000/",
-    ]
+AUTHENTICATION_BACKENDS = (
+    'allauth.account.auth_backends.AuthenticationBackend',
+    'django.contrib.auth.backends.ModelBackend',
+)
 
-SOCIALACCOUNT_PROVIDERS = {
-    "google": {
-        "APP": {
-            "client_id": os.getenv("GOOGLE_CLIENT_ID"),
-            "secret": os.getenv("GOOGLE_CLIENT_SECRET"),
-            "key": "",
-        },
-        "SCOPE": [
-            "profile",
-            "email",
-        ],
-        "AUTH_PARAMS": {
-            "access_type": "online",
-        },
-        "VERIFIED_EMAIL": True,
-    },
-}
+# ACCOUNT_EMAIL_REQUIRED = True
+# ACCOUNT_USERNAME_REQUIRED = False
+# ACCOUNT_AUTHENTICATION_METHOD = 'email'
+# ACCOUNT_EMAIL_VERIFICATION = 'optional'
+# LOGIN_REDIRECT_URL = '/'
+ACCOUNT_EMAIL_VERIFICATION = "none"
+# SOCIALACCOUNT_PROVIDERS = {
+#     "google": {
+#         "APP": {
+#             "client_id": os.getenv("GOOGLE_CLIENT_ID"),
+#             "secret": os.getenv("GOOGLE_CLIENT_SECRET"),
+#             "key": "",
+#         },
+#         "SCOPE": [
+#             "profile",
+#             "email",
+#         ],
+#         "AUTH_PARAMS": {
+#             "access_type": "online",
+#         },
+#         "VERIFIED_EMAIL": True,
+#     },
+# }
 
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),

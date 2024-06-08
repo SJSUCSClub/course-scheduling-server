@@ -214,6 +214,8 @@ def auxiliary_json(dept, csn):
     #     final_arr = general_statements('Schedules')
 
 
+
+
 @api_view(['GET'])
 def user_profile(request):
     if request.user.is_authenticated:
