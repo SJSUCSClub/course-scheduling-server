@@ -1,6 +1,7 @@
 from django.http import HttpResponse
 from django.shortcuts import redirect
 from django.urls import reverse
+from rest_framework_simplejwt.tokens import AccessToken
 import http.client
 import json
 from django.contrib.auth.models import User
@@ -40,17 +41,15 @@ def oauth2callback(request):
   flow.fetch_token(authorization_response=authorization_response)
   credentials = flow.credentials
   request.session['credentials'] = credentials_to_dict(credentials)
-  print(request.session['credentials'])
+
   conn = http.client.HTTPSConnection("www.googleapis.com")
   headers = {'Authorization': f'Bearer {credentials.token}'}
   conn.request("GET", "/oauth2/v2/userinfo", headers=headers)
   google_response = conn.getresponse()
-
   user_info = json.loads(google_response.read().decode())
   email = user_info.get('email')
   first_name = user_info.get('given_name')
   last_name = user_info.get('family_name')
-  print(email, first_name, last_name)
   user, created = User.objects.get_or_create(
     email=email,
     defaults={'username': email, 'first_name': first_name, 'last_name': last_name}
@@ -59,6 +58,7 @@ def oauth2callback(request):
     #unusuable password bc we're using oauth
     user.set_unusable_password()
     user.save()
+  jwt_token = AccessToken.for_user(user)
   user_data = {
     'email': email,
     'first_name': first_name,
@@ -66,8 +66,9 @@ def oauth2callback(request):
   }
   login(request, user, backend='django.contrib.auth.backends.ModelBackend')
   response = HttpResponse('blah')
-  response.set_cookie('token', credentials.token, httponly=True)
-  response.set_cookie('refresh_token', credentials.refresh_token, httponly=True)
+  response.set_cookie('jwttoken', jwt_token, httponly=True)
+  # response.set_cookie('token', credentials.token, httponly=True)
+  # response.set_cookie('refresh_token', credentials.refresh_token, httponly=True)
   response.set_cookie('user_data', json.dumps(user_data))
   response['Location'] = 'http://localhost:3000'
   response.status_code = 302
