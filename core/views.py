@@ -251,7 +251,7 @@ def user_profile(request):
         
     return JsonResponse({"message": "User is not authenticated"}, status=status.HTTP_404_NOT_FOUND)
 
-#@permission_classes([IsAuthenticated]) 
+# @permission_classes([IsAuthenticated]) 
 @api_view(['POST'])
 def post_review(request):
     if request.user.is_authenticated:

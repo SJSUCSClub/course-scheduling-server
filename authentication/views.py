@@ -1,14 +1,12 @@
 from django.http import HttpResponse
 from django.shortcuts import redirect
 from django.urls import reverse
-from rest_framework_simplejwt.tokens import AccessToken
+from google.auth.transport import requests
 import http.client
 import json
 from django.contrib.auth.models import User
 from django.contrib.auth import login
-import google.oauth2.credentials
 import google_auth_oauthlib.flow
-import googleapiclient.discovery
 CLIENT_SECRETS_FILE = "client_secret.json"
 SCOPES = ['openid','https://www.googleapis.com/auth/userinfo.email','https://www.googleapis.com/auth/userinfo.profile']
 
@@ -47,6 +45,7 @@ def oauth2callback(request):
   conn.request("GET", "/oauth2/v2/userinfo", headers=headers)
   google_response = conn.getresponse()
   user_info = json.loads(google_response.read().decode())
+  
   email = user_info.get('email')
   first_name = user_info.get('given_name')
   last_name = user_info.get('family_name')
@@ -58,7 +57,7 @@ def oauth2callback(request):
     #unusuable password bc we're using oauth
     user.set_unusable_password()
     user.save()
-  jwt_token = AccessToken.for_user(user)
+
   user_data = {
     'email': email,
     'first_name': first_name,
@@ -66,9 +65,10 @@ def oauth2callback(request):
   }
   login(request, user, backend='django.contrib.auth.backends.ModelBackend')
   response = HttpResponse('blah')
-  response.set_cookie('jwttoken', jwt_token, httponly=True)
-  # response.set_cookie('token', credentials.token, httponly=True)
-  # response.set_cookie('refresh_token', credentials.refresh_token, httponly=True)
+  
+  response.set_cookie('idtoken',credentials.id_token, httponly=True)
+  response.set_cookie('token', credentials.token, httponly=True)
+  response.set_cookie('refresh_token', credentials.refresh_token, httponly=True)
   response.set_cookie('user_data', json.dumps(user_data))
   response['Location'] = 'http://localhost:3000'
   response.status_code = 302
