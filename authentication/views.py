@@ -2,7 +2,6 @@ from django.http import HttpResponse
 from django.shortcuts import redirect
 from django.urls import reverse
 import requests
-import http.client
 import json
 from django.contrib.auth.models import User
 from django.contrib.auth import login
@@ -10,7 +9,7 @@ import google_auth_oauthlib.flow
 from django.http import JsonResponse
 import os
 import time
-from datetime import datetime,timezone
+from datetime import timezone
 
 CLIENT_SECRETS_FILE = "client_secret.json"
 SCOPES = ['openid','https://www.googleapis.com/auth/userinfo.email','https://www.googleapis.com/auth/userinfo.profile']
@@ -45,12 +44,16 @@ def oauth2callback(request):
   credentials = flow.credentials
   request.session['credentials'] = credentials_to_dict(credentials)
 
-  conn = http.client.HTTPSConnection("www.googleapis.com")
-  headers = {'Authorization': f'Bearer {credentials.token}'}
-  conn.request("GET", "/oauth2/v2/userinfo", headers=headers)
-  google_response = conn.getresponse()
-  user_info = json.loads(google_response.read().decode())
+  url = 'https://www.googleapis.com/oauth2/v2/userinfo'
+  headers = {
+    'Authorization': f'Bearer {credentials.token}',
+    'Content-Type': 'application/json' 
+  }
+  response = requests.get(url, headers=headers)
+  if response.status_code != 200:
+    return JsonResponse({'error': 'Failed to get user info'}, status=response.status_code)
 
+  user_info = response.json()
   email = user_info.get('email')
   first_name = user_info.get('given_name')
   last_name = user_info.get('family_name')
@@ -76,7 +79,7 @@ def oauth2callback(request):
   response = HttpResponse('blah')
   
   response.set_cookie('idtoken',credentials.id_token, httponly=True)
-  response.set_cookie('token', credentials.token, httponly=True)
+  response.set_cookie('access_token', credentials.token, httponly=True)
   response.set_cookie('refresh_token', credentials.refresh_token, httponly=True)
   response.set_cookie('user_data', json.dumps(user_data))
   response.set_cookie('token_expiration', expires_in_unix)
@@ -85,11 +88,11 @@ def oauth2callback(request):
   return response
 
 def RefreshToken(request):
-  auth_header = request.headers.get('Authorization')
-  if not auth_header or not auth_header.startswith('Bearer '):
-    return JsonResponse({'error': 'Authorization header is required'}, status=400)
+  header = request.headers.get('Authorization')
+  if not header or not header.startswith('Bearer '):
+    return JsonResponse({'error': 'Authorization header is required'}, status=404)
   
-  refresh_token = auth_header.split(' ')[1]
+  refresh_token = header.split(' ')[1]
   
   token_url = "https://oauth2.googleapis.com/token"
   payload = {
