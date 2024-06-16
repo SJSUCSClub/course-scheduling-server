@@ -3,7 +3,7 @@ from google.auth.transport import requests
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from rest_framework import authentication, exceptions
-
+import os 
 User = get_user_model()
 
 class GoogleIDTokenAuthentication(authentication.BaseAuthentication):
@@ -14,7 +14,7 @@ class GoogleIDTokenAuthentication(authentication.BaseAuthentication):
         
         id_token_str = header.split(' ')[1]
         try:
-            id_info = id_token.verify_oauth2_token(id_token_str, requests.Request(), "699655080164-8oubieg94ai970d0ltqdcv0ff7f2ubuo.apps.googleusercontent.com")
+            id_info = id_token.verify_oauth2_token(id_token_str, requests.Request(), os.getenv('GOOGLE_CLIENT_ID'))
             email = id_info.get('email')
             try:
                 user = User.objects.get(email=email)

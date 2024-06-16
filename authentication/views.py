@@ -1,12 +1,17 @@
 from django.http import HttpResponse
 from django.shortcuts import redirect
 from django.urls import reverse
-from google.auth.transport import requests
+import requests
 import http.client
 import json
 from django.contrib.auth.models import User
 from django.contrib.auth import login
 import google_auth_oauthlib.flow
+from django.http import JsonResponse
+import os
+import time
+from datetime import datetime,timezone
+
 CLIENT_SECRETS_FILE = "client_secret.json"
 SCOPES = ['openid','https://www.googleapis.com/auth/userinfo.email','https://www.googleapis.com/auth/userinfo.profile']
 
@@ -45,7 +50,7 @@ def oauth2callback(request):
   conn.request("GET", "/oauth2/v2/userinfo", headers=headers)
   google_response = conn.getresponse()
   user_info = json.loads(google_response.read().decode())
-  
+
   email = user_info.get('email')
   first_name = user_info.get('given_name')
   last_name = user_info.get('family_name')
@@ -63,6 +68,10 @@ def oauth2callback(request):
     'first_name': first_name,
     'last_name': last_name
   }
+  expires_in = credentials.expiry
+  #time since epoch
+  expires_in_unix = expires_in.replace(tzinfo=timezone.utc).timestamp()
+
   login(request, user, backend='django.contrib.auth.backends.ModelBackend')
   response = HttpResponse('blah')
   
@@ -70,6 +79,40 @@ def oauth2callback(request):
   response.set_cookie('token', credentials.token, httponly=True)
   response.set_cookie('refresh_token', credentials.refresh_token, httponly=True)
   response.set_cookie('user_data', json.dumps(user_data))
+  response.set_cookie('token_expiration', expires_in_unix)
   response['Location'] = 'http://localhost:3000'
+  response.status_code = 302
+  return response
+
+def RefreshToken(request):
+  auth_header = request.headers.get('Authorization')
+  if not auth_header or not auth_header.startswith('Bearer '):
+    return JsonResponse({'error': 'Authorization header is required'}, status=400)
+  
+  refresh_token = auth_header.split(' ')[1]
+  
+  token_url = "https://oauth2.googleapis.com/token"
+  payload = {
+    'client_id': os.getenv('GOOGLE_CLIENT_ID'),
+    'client_secret': os.getenv('GOOGLE_CLIENT_SECRET'),
+    'refresh_token': refresh_token,
+    'grant_type': 'refresh_token'
+  }
+  
+  response = requests.post(token_url, data=payload)
+  
+  if response.status_code != 200:
+    return JsonResponse({'error': 'Failed to refresh token'}, status=response.status_code)
+  
+  response_data = response.json()
+  
+  new_access_token = response_data.get('access_token')
+  new_id_token = response_data.get('id_token')
+  expires_in = time.time()+response_data.get('expires_in')
+
+  response = HttpResponse("blah")
+  response.set_cookie('idtoken',  new_id_token, httponly=True)
+  response.set_cookie('token', new_access_token, httponly=True)
+  response.set_cookie('token_expiration', expires_in)
   response.status_code = 302
   return response
