@@ -57,6 +57,9 @@ def oauth2callback(request):
   email = user_info.get('email')
   first_name = user_info.get('given_name')
   last_name = user_info.get('family_name')
+  if not email.endswith("@sjsu.edu"):
+    return JsonResponse({'error': 'Unauthorized email address'}, status=403)
+  
   user, created = User.objects.get_or_create(
     email=email,
     defaults={'username': email, 'first_name': first_name, 'last_name': last_name}
@@ -72,6 +75,7 @@ def oauth2callback(request):
     'last_name': last_name
   }
   expires_in = credentials.expiry
+  
   #time since epoch
   expires_in_unix = expires_in.replace(tzinfo=timezone.utc).timestamp()
 
