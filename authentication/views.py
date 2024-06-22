@@ -121,7 +121,7 @@ def RefreshToken(request):
 
   response = HttpResponse("blah")
   response.set_cookie('idtoken',  new_id_token, httponly=True)
-  response.set_cookie('token', new_access_token, httponly=True)
+  response.set_cookie('access_token', new_access_token, httponly=True)
   response.set_cookie('token_expiration', expires_in)
   response.status_code = 302
   return response
