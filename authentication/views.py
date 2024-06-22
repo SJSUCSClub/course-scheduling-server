@@ -96,11 +96,9 @@ def oauth2callback(request):
   return response
 
 def RefreshToken(request):
-  header = request.headers.get('Authorization')
-  if not header or not header.startswith('Bearer '):
-    return JsonResponse({'error': 'Authorization header is required'}, status=404)
-  
-  refresh_token = header.split(' ')[1]
+  refresh_token = request.COOKIES.get('refresh_token')
+  if not refresh_token:
+    return JsonResponse({'error': 'Not valid refresh token'}, status=401)
   
   token_url = "https://oauth2.googleapis.com/token"
   payload = {
