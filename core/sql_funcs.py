@@ -147,6 +147,10 @@ def merge(json1, json2):
 
     # print(json_data[0])
 
+# def addUser(email,name):
+#     query = f'INSERT INTO Users (id,name,email,is_professor,username) VALUES({email[0:-9]},{name},{email},FALSE,generateUsername())'
+#     return run_change_sql(query)
+
 def calculate_votes(table,columns):
     col_tuple = tuple(columns.values())
     query = f"SELECT SUM(CASE WHEN vote = true THEN 1 ELSE 0 END) AS upvotes, SUM(CASE WHEN vote = false THEN 1 ELSE 0 END) AS downvotes FROM {table} WHERE user_id = %s AND review_id = %s"

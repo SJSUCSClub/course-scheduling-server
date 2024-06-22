@@ -4,18 +4,23 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from rest_framework import authentication, exceptions
 import os 
+import requests
 User = get_user_model()
 
 class GoogleIDTokenAuthentication(authentication.BaseAuthentication):
     def authenticate(self, request):
-        header = request.headers.get('Authorization')
-        if not header or not header.startswith('Bearer '):
-            raise exceptions.AuthenticationFailed('No Bearer token')
-        
-        id_token_str = header.split(' ')[1]
+        access_token = request.COOKIES.get('access_token')
+        if not access_token:
+            raise exceptions.AuthenticationFailed('No access token in cookies')
         try:
-            id_info = id_token.verify_oauth2_token(id_token_str, requests.Request(), os.getenv('GOOGLE_CLIENT_ID'))
-            email = id_info.get('email')
+            response = requests.get(f'https://www.googleapis.com/oauth2/v1/tokeninfo?access_token={access_token}')
+            if response.status_code != 200:
+                raise exceptions.AuthenticationFailed('Invalid token')
+            token_info = response.json()
+            email = token_info.get('email')
+
+            if not email:
+                raise exceptions.AuthenticationFailed('Token did not contain email')
             try:
                 user = User.objects.get(email=email)
             except User.DoesNotExist:
@@ -23,5 +28,5 @@ class GoogleIDTokenAuthentication(authentication.BaseAuthentication):
             
             #as long as it returns a valid user object, they're authorized
             return (user, None)
-        except ValueError:
+        except:
             raise exceptions.AuthenticationFailed('Invalid token')

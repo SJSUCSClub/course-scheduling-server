@@ -16,7 +16,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 load_dotenv()
-SITE_ID = 0
+SITE_ID = 1
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -99,13 +99,23 @@ WSGI_APPLICATION = 'course_scheduling.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': 'postgres',
+#         'USER': os.getenv("DB_USER"),
+#         'PASSWORD': os.getenv("DB_PASSWORD"),
+#         'HOST': os.getenv("DB_HOST"),
+#         'PORT': os.getenv("DB_PORT")
+#     }
+# }
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'postgres',
-        'USER': os.getenv("DB_USER"),
-        'PASSWORD': os.getenv("DB_PASSWORD"),
-        'HOST': os.getenv("DB_HOST"),
+        'NAME': 'course_scheduler',
+        'USER': os.getenv("LOCAL_USER"),
+        'PASSWORD': os.getenv("LOCAL_PASSWORD"),
+        'HOST': os.getenv("LOCAL_HOST"),
         'PORT': os.getenv("DB_PORT")
     }
 }

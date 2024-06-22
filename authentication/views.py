@@ -7,6 +7,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth import login
 import google_auth_oauthlib.flow
 from django.http import JsonResponse
+from core.sql_funcs import insert
 import os
 import time
 from datetime import timezone
@@ -68,6 +69,10 @@ def oauth2callback(request):
     #unusuable password bc we're using oauth
     user.set_unusable_password()
     user.save()
+  try:
+    insert('users',{'id':email[0:-9],'name':first_name+" "+last_name,'email':email,'is_professor':False,'username':'generateUsername()'})
+  except:
+    print("user already in db")
 
   user_data = {
     'email': email,
@@ -81,7 +86,6 @@ def oauth2callback(request):
 
   login(request, user, backend='django.contrib.auth.backends.ModelBackend')
   response = HttpResponse('blah')
-  
   response.set_cookie('idtoken',credentials.id_token, httponly=True)
   response.set_cookie('access_token', credentials.token, httponly=True)
   response.set_cookie('refresh_token', credentials.refresh_token, httponly=True)
