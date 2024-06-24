@@ -1,6 +1,10 @@
 # Files
 .DS_Store
 .env
+*.pyc
+*.pyo
 
 # Directories
 course_scheduling/__pycache__/
+__pycache__/
+venv/
