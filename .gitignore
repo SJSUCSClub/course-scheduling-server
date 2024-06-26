@@ -3,8 +3,11 @@
 .env
 *.pyc
 *.pyo
+client_secret.json
 
 # Directories
 course_scheduling/__pycache__/
 __pycache__/
 venv/
+
+
