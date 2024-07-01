@@ -11,11 +11,14 @@ from core.sql_funcs import insert
 import os
 import time
 from datetime import timezone
+from rest_framework.decorators import api_view, permission_classes
+from authentication.permissions import GooglePermission
 
 CLIENT_SECRETS_FILE = "client_secret.json"
 SCOPES = ['openid','https://www.googleapis.com/auth/userinfo.email','https://www.googleapis.com/auth/userinfo.profile']
 
 
+@api_view(['POST'])
 def credentials_to_dict(credentials):
   return {'token': credentials.token,
           'refresh_token': credentials.refresh_token,
@@ -26,6 +29,8 @@ def credentials_to_dict(credentials):
 
 #add user to db
 #send and create ID token from backend containing user's profile pic,name, etc httponly false so browser can access it
+@api_view(['POST'])
+@permission_classes([GooglePermission])
 def GoogleAuthorize(request):
   flow = google_auth_oauthlib.flow.Flow.from_client_secrets_file(CLIENT_SECRETS_FILE, scopes=SCOPES)
   flow.redirect_uri = request.build_absolute_uri(reverse('oauth2callback'))
