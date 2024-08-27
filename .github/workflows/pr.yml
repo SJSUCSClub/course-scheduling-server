@@ -1,0 +1,17 @@
+name: PR Build and Test
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup python and install dependencies
+        uses: ./.github/actions/setup-python-and-install
+        with:
+          python-version: "3.12"

@@ -8,3 +8,6 @@
 course_scheduling/__pycache__/
 __pycache__/
 venv/
+
+# secrets
+client_secret.json

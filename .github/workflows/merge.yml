@@ -1,0 +1,19 @@
+name: Merge Build
+
+on:
+  pull_request:
+    types:
+      - closed
+
+jobs:
+  build:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup python and install dependencies
+        uses: ./.github/actions/setup-python-and-install
+        with:
+          node-version: "3.12"
