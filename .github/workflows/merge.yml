@@ -1,11 +1,13 @@
-name: PR Build and Test
+name: Merge Build
 
 on:
   pull_request:
-    types: [opened, reopened, synchronize]
+    types:
+      - closed
 
 jobs:
   build:
+    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -14,4 +16,4 @@ jobs:
       - name: Setup python and install dependencies
         uses: ./.github/actions/setup-python-and-install
         with:
-          python-version: "3.12"
+          node-version: "3.12"
