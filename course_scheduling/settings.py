@@ -157,12 +157,7 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-REST_FRAMEWORK = {
-    "DEFAULT_AUTHENTICATION_CLASSES": [
-        #custom auth class, check authentication folder
-        "authentication.authentication.GoogleIDTokenAuthentication",
-    ]
-}
+REST_FRAMEWORK = {}
 REST_AUTH = {
     "USE_JWT": True,
     "JWT_AUTH_HTTPONLY": False,
