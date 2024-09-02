@@ -7,10 +7,10 @@ from rest_framework import status
 from django.db import connection
 from core.models import Users, Courses, Reviews, Schedules
 # from core.serializers import CourseSerialized, UsersSerialized, ReviewsSerialized, ReviewCommentsSerialized, SchedulesSerialized
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
 from django.http import HttpResponse
 from datetime import datetime
-
+from authentication.permissions import AuthenticatedPermission
 
 def index(request):
     return HttpResponse("Hello, world. You're at the polls index.")
@@ -254,18 +254,16 @@ def user_profile(request):
     except:
         return JsonResponse({"message": "Internal Server Error"}, status=500)
 
-# @permission_classes([IsAuthenticated]) 
 @api_view(['POST'])
+@permission_classes([AuthenticatedPermission])
 def post_review(request):
     try:
-        if request.user.is_authenticated:
-            user_id = request.user.email[0:-9]
-            json_data = request.body.decode('utf-8')
-            data = json.loads(json_data)
-            results = insert('reviews',{'user_id':user_id, 'professor_id':data["professor_id"], 'course_number':data["course_number"],'department':data["department"],'content':data["content"],'quality':data['quality'],'ease':data['ease'],'grade':data['grade'],'take_again':data['take_again'],'tags':data['tags'],'is_user_anonymous':data['is_user_anonymous']})
-            return JsonResponse(results, safe=False)
-        
-        return JsonResponse({"message": "User is not authenticated"}, status=status.HTTP_404_NOT_FOUND)
+        user_id = request.user.email[0:-9]
+        print(user_id)
+        json_data = request.body.decode('utf-8')
+        data = json.loads(json_data)
+        results = insert('reviews',{'user_id':user_id, 'professor_id':data["professor_id"], 'course_number':data["course_number"],'department':data["department"],'content':data["content"],'quality':data['quality'],'ease':data['ease'],'grade':data['grade'],'take_again':data['take_again'],'tags':data['tags'],'is_user_anonymous':data['is_user_anonymous']})
+        return JsonResponse(results, safe=False)    
     except:
         return JsonResponse({"message": "Internal Server Error"}, status=500)
 
@@ -283,28 +281,26 @@ def delete_review(request,review_id):
     return JsonResponse(results, safe=False)
 
 @api_view(['PUT','DELETE'])
+@permission_classes([AuthenticatedPermission])
 def review_query(request,review_id):
     try:
-        if request.user.is_authenticated:
-            if request.method == 'PUT': 
-                return put_review(request,review_id) 
-            elif request.method == 'DELETE':
-                return delete_review(request,review_id)
-        return JsonResponse({"message": "User is not authenticated"}, status=status.HTTP_404_NOT_FOUND)
+        print(request.method)
+        if request.method == 'PUT': 
+            return put_review(request,review_id) 
+        elif request.method == 'DELETE':
+            return delete_review(request,review_id)
     except:
         return JsonResponse({"message": "Internal Server Error"}, status=500)
 
 @api_view(['POST'])
+@permission_classes([AuthenticatedPermission])
 def post_comment(request):
     try:
-        if request.user.is_authenticated:
-            user_id = request.user.email[0:-9]
-            json_data = request.body.decode('utf-8')
-            data = json.loads(json_data)
-            results = insert('comments',{'user_id':user_id, 'review_id':data["review_id"], 'content':data["content"]})
-            return JsonResponse(results, safe=False)
-        
-        return JsonResponse({"message": "User is not authenticated"}, status=status.HTTP_404_NOT_FOUND)
+        user_id = request.user.email[0:-9]
+        json_data = request.body.decode('utf-8')
+        data = json.loads(json_data)
+        results = insert('comments',{'user_id':user_id, 'review_id':data["review_id"], 'content':data["content"]})
+        return JsonResponse(results, safe=False) 
     except:
         return JsonResponse({"message": "Internal Server Error"}, status=500)
 
@@ -325,28 +321,25 @@ def delete_comment(request):
     return JsonResponse(results, safe=False)
 
 @api_view(['PUT','DELETE'])
+@permission_classes([AuthenticatedPermission])
 def comment_query(request):
     try:
-        if request.user.is_authenticated:
-            if request.method == 'PUT': 
-                return put_comment(request) 
-            elif request.method == 'DELETE':
-                return delete_comment(request)
-        return JsonResponse({"message": "User is not authenticated"}, status=status.HTTP_404_NOT_FOUND)
+        if request.method == 'PUT': 
+            return put_comment(request) 
+        elif request.method == 'DELETE':
+            return delete_comment(request)
     except:
         return JsonResponse({"message": "Internal Server Error"}, status=500)
 
 @api_view(['POST'])
+@permission_classes([AuthenticatedPermission])
 def post_flagged_review(request):
     try:
-        if request.user.is_authenticated:
-            user_id = request.user.email[0:-9]
-            json_data = request.body.decode('utf-8')
-            data = json.loads(json_data)
-            results = insert('flag_reviews',{'user_id':user_id, 'review_id':data["review_id"], 'reason':data["reason"]})
-            return JsonResponse(results, safe=False)
-        
-        return JsonResponse({"message": "User is not authenticated"}, status=status.HTTP_404_NOT_FOUND)
+        user_id = request.user.email[0:-9]
+        json_data = request.body.decode('utf-8')
+        data = json.loads(json_data)
+        results = insert('flag_reviews',{'user_id':user_id, 'review_id':data["review_id"], 'reason':data["reason"]})
+        return JsonResponse(results, safe=False)        
     except:
         return JsonResponse({"message": "Internal Server Error"}, status=500)
         
@@ -356,7 +349,7 @@ def put_flag(request):
     user_id = request.user.email[0:-9]
     json_data = request.body.decode('utf-8')
     data = json.loads(json_data)
-    results = update('flag_reviews',{'reason':data["reason"],"updated_at":datetime.now()},{'user_id':user_id,'review_id':review_id,'id':flag_id})
+    results = update('flag_reviews',{'reason':data["reason"]},{'user_id':user_id,'review_id':review_id,'id':flag_id})
     return JsonResponse(results, safe=False)
 
 def delete_flag(request):
@@ -367,57 +360,52 @@ def delete_flag(request):
     return JsonResponse(results, safe=False)
 
 @api_view(['PUT','DELETE'])
+@permission_classes([AuthenticatedPermission])
 def flagged_query(request):
     try:
-        if request.user.is_authenticated:
-            if request.method == 'PUT': 
-                return put_flag(request) 
-            elif request.method == 'DELETE':
-                return delete_flag(request)
-        return JsonResponse({"message": "User is not authenticated"}, status=status.HTTP_404_NOT_FOUND)
+        if request.method == 'PUT': 
+            return put_flag(request) 
+        elif request.method == 'DELETE':
+            return delete_flag(request)
     except:
         return JsonResponse({"message": "Internal Server Error"}, status=500)
 
 @api_view(['POST'])
+@permission_classes([AuthenticatedPermission])
 def post_vote(request):
-    try:
-        if request.user.is_authenticated:
-            user_id = request.user.email[0:-9]
-            json_data = request.body.decode('utf-8')
-            data = json.loads(json_data)
-            results = insert('votes',{'user_id':user_id, 'review_id':data["review_id"], 'vote':data["vote"]})
-            return JsonResponse(results, safe=False)
-        
-        return JsonResponse({"message": "User is not authenticated"}, status=status.HTTP_404_NOT_FOUND)
-    except:
-        return JsonResponse({"message": "Internal Server Error"}, status=500)
-
-def put_vote(request):
-    if request.user.is_authenticated:
-        review_id = request.GET.get('review_id')
+    # try:
         user_id = request.user.email[0:-9]
         json_data = request.body.decode('utf-8')
         data = json.loads(json_data)
-        results = update('votes',{'vote':data["vote"]},{'user_id':user_id,'review_id':review_id})
+        results = insert('user_review_critique',{'user_id':user_id, 'review_id':data["review_id"], 'upvote':data["vote"]})
         return JsonResponse(results, safe=False)
+    # except:
+    #     return JsonResponse({"message": "Internal Server Error"}, status=500)
+
+def put_vote(request):
+    review_id = request.GET.get('review_id')
+    user_id = request.user.email[0:-9]
+    json_data = request.body.decode('utf-8')
+    data = json.loads(json_data)
+    results = update('user_review_critique',{'upvote':data["vote"]},{'user_id':user_id,'review_id':review_id})
+    return JsonResponse(results, safe=False)
     
-    return JsonResponse({"message": "User is not authenticated"}, status=status.HTTP_404_NOT_FOUND)
 
 def delete_vote(request):
     review_id = request.GET.get('review_id')
     user_id = request.user.email[0:-9]
-    results = delete('votes',{'user_id':user_id,'review_id':review_id})
+    results = delete('user_review_critique',{'user_id':user_id,'review_id':review_id})
     return JsonResponse(results, safe=False)
 
 @api_view(['PUT','DELETE'])
+@permission_classes([AuthenticatedPermission])
+
 def vote_query(request):
     try:
-        if request.user.is_authenticated:
-            if request.method == 'PUT': 
-                return put_vote(request) 
-            elif request.method == 'DELETE':
-                return delete_vote(request)
-        return JsonResponse({"message": "User is not authenticated"}, status=status.HTTP_404_NOT_FOUND)
+        if request.method == 'PUT': 
+            return put_vote(request) 
+        elif request.method == 'DELETE':
+            return delete_vote(request)
     except:
         return JsonResponse({"message": "Internal Server Error"}, status=500)
 
