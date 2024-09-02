@@ -288,11 +288,11 @@ def auxiliary_json(dept, csn):
     return final_json
 
 
-''' 
-    params: 
+'''
+    params:
         diction - json obj / dictionary
         key - specific key containing list
-    converts the values to a list of 
+    converts the values to a list of
     comma separated integers
     returns list of ints
 '''
@@ -558,7 +558,7 @@ def prof_reviews(request, professor_id):
             page = 1
             limit = 10
 
-        if limit and limit not in ['10', '20', '50']:
+        if limit and limit not in ['3', '10', '20', '50']:
             limit = 10
         elif limit:
             limit = int(limit)
@@ -569,12 +569,12 @@ def prof_reviews(request, professor_id):
         count, _ = run_sql(count_query, (professor_id, ))
         count = count[0][0]
         query = """
-        select users.id as user_id, reviews.id as review_id, 
-            reviews.created_at, 
-            reviews.updated_at, users.name, users.username, 
-            reviews.course_number, reviews.department, 
-            reviews.professor_id, reviews.content, reviews.quality, 
-            reviews.ease, reviews.grade, reviews.tags, reviews.take_again, 
+        select users.id as user_id, reviews.id as review_id,
+            reviews.created_at,
+            reviews.updated_at, users.name, users.username,
+            reviews.course_number, reviews.department,
+            reviews.professor_id, reviews.content, reviews.quality,
+            reviews.ease, reviews.grade, reviews.tags, reviews.take_again,
             reviews.is_user_anonymous
             from reviews left join users on users.id = reviews.user_id
         where reviews.professor_id = %s
@@ -653,9 +653,9 @@ def course_search(request):
         limit = request.GET.get('limit', 10)
         dept = request.GET.get('department')
 
-        if limit and limit != 10 and limit not in ['10', '20', '50']:
+        if limit and limit != 10 and limit not in ['3', '10', '20', '50']:
             limit = 10
-        elif limit and limit in ['10', '20', '50']:
+        elif limit and limit in ['3', '10', '20', '50']:
             limit = int(limit)
 
         # if type(page) == str:
@@ -727,9 +727,9 @@ def prof_search(request):
         page = request.GET.get('page', 1)
         limit = request.GET.get('limit', 10)
 
-        if limit and limit != 10 and limit not in ['10', '20', '50']:
+        if limit and limit != 10 and limit not in ['3', '10', '20', '50']:
             limit = 10
-        elif limit and limit in ['10', '20', '50']:
+        elif limit and limit in ['3', '10', '20', '50']:
             limit = int(limit)
 
         if type(page) == str:
@@ -782,9 +782,9 @@ def schedule_search(request):
         moi = request.GET.get('mode_of_instruction')
         units = request.GET.getlist('units')
 
-        if limit and limit != 10 and limit not in ['10', '20', '50']:
+        if limit and limit != 10 and limit not in ['3', '10', '20', '50']:
             limit = 10
-        elif limit and limit in ['10', '20', '50']:
+        elif limit and limit in ['3', '10', '20', '50']:
             limit = int(limit)
 
         where_cases = {'term': term, 'year': year, 'professor_name': professor_name,
@@ -814,8 +814,8 @@ def schedule_search(request):
                 SELECT s.term, s.year, s.class_number,
                 s.units, s.section, s.days, s.dates, s.times,
                 s.class_type, s.location, s.mode_of_instruction,
-                s.professor_id, u.name as professor_name, 
-                c.name as course_title, s.department, s.course_number, s.satisfies_area, CONCAT(s.department, '-', s.course_number) as course_dept FROM schedules as s LEFT JOIN users as u ON s.professor_id = u.id 
+                s.professor_id, u.name as professor_name,
+                c.name as course_title, s.department, s.course_number, s.satisfies_area, CONCAT(s.department, '-', s.course_number) as course_dept FROM schedules as s LEFT JOIN users as u ON s.professor_id = u.id
                 LEFT JOIN courses as c ON s.department = c.department AND s.course_number = c.course_number
             """
 
