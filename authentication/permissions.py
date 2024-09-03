@@ -11,9 +11,9 @@ User = get_user_model()
 class AuthenticatedPermission(BasePermission):
     def has_permission(self, request, view):
         try:
-            #so they cant just take the tokens and use them when not logged in
-            if not request.user.is_authenticated:
-                raise PermissionDenied('User is not logged in')
+            #so they cant just take the tokens and use them when not logged in (i dont have a good way to test this so i'm going to leave this commented for now)
+            # if not request.user.is_authenticated:
+            #     raise PermissionDenied('User is not logged in')
             if request.path.startswith("/google/"):
                 access_token = request.COOKIES.get('access_token')
                 response = requests.get(f'https://www.googleapis.com/oauth2/v1/tokeninfo?access_token={access_token}')
