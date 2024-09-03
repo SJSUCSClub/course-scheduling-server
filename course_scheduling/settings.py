@@ -15,8 +15,11 @@ from datetime import timedelta
 from pathlib import Path
 from dotenv import load_dotenv
 
+
+
 load_dotenv()
 SITE_ID = 1
+SESSION_COOKIE_AGE = 10800
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -72,6 +75,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'authentication.middleware.TokenRefreshMiddleware'
 ]
 
 ROOT_URLCONF = 'course_scheduling.urls'

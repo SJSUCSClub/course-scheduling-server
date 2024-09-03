@@ -153,7 +153,7 @@ def merge(json1, json2):
 
 def calculate_votes(table,columns):
     col_tuple = tuple(columns.values())
-    query = f"SELECT SUM(CASE WHEN vote = true THEN 1 ELSE 0 END) AS upvotes, SUM(CASE WHEN vote = false THEN 1 ELSE 0 END) AS downvotes FROM {table} WHERE user_id = %s AND review_id = %s"
+    query = f"SELECT SUM(CASE WHEN user_review_critique.upvote = true THEN 1 ELSE 0 END) AS upvotes, SUM(CASE WHEN upvote = false THEN 1 ELSE 0 END) AS downvotes FROM {table} WHERE user_id = %s AND review_id = %s"
     return run_sql(query,col_tuple)
 
 def tags(value):

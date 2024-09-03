@@ -12,6 +12,7 @@ import os
 import time
 from datetime import timezone
 from rest_framework.decorators import api_view, permission_classes
+from authentication.utils.refreshToken import refresh
 from authentication.permissions import AuthenticatedPermission,NotAuthenticatedPermission
 
 CLIENT_SECRETS_FILE = "client_secret.json"
@@ -106,37 +107,27 @@ def oauth2callback(request):
 @permission_classes([AuthenticatedPermission])
 def Logout(request):
   logout(request)
-  return redirect('http://localhost:3000')
+  response = redirect('http://localhost:3000')
+  delete_cookies = ["refresh_token","access_token","idtoken","user_data","token_expiration"]
+  for cookie in delete_cookies:
+    response.delete_cookie(cookie, path='/')
+
+  return response
 
 @api_view(['POST'])
 @permission_classes([AuthenticatedPermission])
 def RefreshToken(request):
   refresh_token = request.COOKIES.get('refresh_token')
-  if not refresh_token:
-    return JsonResponse({'error': 'Not valid refresh token'}, status=401)
-  
-  token_url = "https://oauth2.googleapis.com/token"
-  payload = {
-    'client_id': os.getenv('GOOGLE_CLIENT_ID'),
-    'client_secret': os.getenv('GOOGLE_CLIENT_SECRET'),
-    'refresh_token': refresh_token,
-    'grant_type': 'refresh_token'
-  }
-  
-  response = requests.post(token_url, data=payload)
-  
-  if response.status_code != 200:
-    return JsonResponse({'error': 'Failed to refresh token'}, status=response.status_code)
-  
-  response_data = response.json()
-  
+
+  response_data = refresh(refresh_token)
+  if response_data == None:
+    return JsonResponse({'error': 'Failed to refresh token'}, status=401)
   new_access_token = response_data.get('access_token')
   new_id_token = response_data.get('id_token')
   expires_in = time.time()+response_data.get('expires_in')
 
-  response = HttpResponse("blah")
+  response = JsonResponse({'message': 'Refreshed Tokens'}, status = 200)
   response.set_cookie('idtoken',  new_id_token, httponly=True)
   response.set_cookie('access_token', new_access_token, httponly=True)
   response.set_cookie('token_expiration', expires_in)
-  response.status_code = 302
   return response

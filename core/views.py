@@ -217,40 +217,39 @@ def auxiliary_json(dept, csn):
 
 
 @api_view(['GET'])
+@permission_classes([AuthenticatedPermission])
 def user_profile(request):
     try:
-        if request.user.is_authenticated:
-            result = {}
-            user_id = request.user.email[0:-9]
-            reviews = where(
-                'reviews', {'user_id': user_id})
-            for i in range(len(reviews)):
-                current_review = reviews[i]
-                comments = where('Comments', {'review_id': current_review['id']})
-                current_review["comments"]=comments
-                voted = where('votes',{'user_id': user_id,'review_id':current_review['id']},["vote"])
-                current_review["voted"] = voted[0]['vote'] if len(voted)>0 else None
+        result = {}
+        user_id = request.user.email[0:-9]
+        reviews = where(
+            'reviews', {'user_id': user_id})
+        for i in range(len(reviews)):
+            current_review = reviews[i]
+            comments = where('Comments', {'review_id': current_review['id']})
+            current_review["comments"]=comments
+            voted = where('user_review_critique',{'user_id': user_id,'review_id':current_review['id']},["user_review_critique"])
+            current_review["voted"] = voted[0]['vote'] if len(voted)>0 else None
 
-                votes = calculate_votes("votes",{'user_id': user_id,'review_id':current_review['id']})[0][0]
-                votes_dict = {}
-                votes_dict["upvotes"] = votes[0]
-                votes_dict["downvotes"] = votes[1]
-                current_review["votes"] = votes_dict
+            votes = calculate_votes("user_review_critique",{'user_id': user_id,'review_id':current_review['id']})[0][0]
+            votes_dict = {}
+            votes_dict["upvotes"] = votes[0]
+            votes_dict["downvotes"] = votes[1]
+            current_review["votes"] = votes_dict
 
-            result['review'] = reviews
-            comments = where(
-                'Comments', {'user_id': user_id})
-            result['comments'] = comments
-            flagged = where(
-                'flag_reviews', {'user_id': user_id})
-            result['flagged_reviews'] = flagged
-            voted = where(
-                'votes', {'user_id': user_id})
-            result['reviews_voted'] = voted
-            
-            return JsonResponse(result, safe=False)
-            
-        return JsonResponse({"message": "User is not authenticated"}, status=status.HTTP_404_NOT_FOUND)
+        result['review'] = reviews
+        comments = where(
+            'Comments', {'user_id': user_id})
+        result['comments'] = comments
+        flagged = where(
+            'flag_reviews', {'user_id': user_id})
+        result['flagged_reviews'] = flagged
+        voted = where(
+            'user_review_critique', {'user_id': user_id})
+        result['reviews_voted'] = voted
+        
+        return JsonResponse(result, safe=False)
+        
     except:
         return JsonResponse({"message": "Internal Server Error"}, status=500)
 
