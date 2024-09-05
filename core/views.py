@@ -34,7 +34,7 @@ def pull_reviews(csn, dept, comments, page=None, limit=None, tags=None):
     final_arr = []
     unique_tags = set()
     res = dict()
-    res['total_reviews'] = len(init_json)
+    res['total_results'] = len(init_json)
     for json_obj in init_json:
         if json_obj['tags']:
             temp = str(json_obj['tags'])
@@ -75,28 +75,35 @@ def pull_reviews(csn, dept, comments, page=None, limit=None, tags=None):
                 comments = where('comments', {
                     'review_id': json_obj['id']})
                 json_obj = row_merge(
-                    [json_obj, {'critics': critiques}, {'comments': comments}])
+                    [json_obj, {'votes': critiques}, {'comments': comments}])
             else:
-                json_obj = row_merge([json_obj, {'critics': critiques}])
+                json_obj = row_merge([json_obj, {'votes': critiques, "comments": None}])
 
         ''' Get professor email and name  '''
         if json_obj['professor_id'] is not None:
             prof = where('users', {'id': json_obj['professor_id']}, [
                 'name', 'email'])
-            json_obj = row_merge([json_obj, prof[0]])
+            # explicitly mark these fields as professor fields
+            json_obj['professor_email'] = prof[0]['email']
+            json_obj['professor_name'] = prof[0]['name']
+        else:
+            raise Exception('No professor found')
 
         ''' Obtain username and name'''
         if json_obj['user_id'] is not None:
             user = where('users', {'id': json_obj['user_id']}, [
                 'username', 'name'])
             json_obj = row_merge([json_obj, user[0]])
+        else:
+            json_obj['username'] = None
+            json_obj['name'] = None
 
         final_arr.append(json_obj)
     filter_results = dict()
     if len(init_json) < limit:
-        filter_results['pages'] = 1
+        res['pages'] = 1
     else:
-        filter_results['pages'] = len(init_json) // (
+        res['pages'] = len(init_json) // (
             int(limit) if not None else 10)
     filter_results['tags'] = list(unique_tags)
     res['filters'] = filter_results
@@ -134,6 +141,9 @@ def sql_schedules(request, course):
         dept = course[0]
 
         if csn is not None and dept is not None:
+            course_title = where("Courses", {"course_number": csn, "department": dept})
+            course_title = course_title[0]['name']
+
             json_data = where(
                 'Schedules', {'course_number': csn, 'department': dept})
 
@@ -144,6 +154,8 @@ def sql_schedules(request, course):
                         'Users', {'id': json_obj['professor_id']}, ['name'])
                     merged = [json_obj, prof_data[0]]
                     final_json = row_merge(merged)
+                    final_json['professor_name'] = final_json.pop('name')
+                    final_json['course_title'] = course_title
                     final_arr.append(final_json)
                 else:
                     final_arr.append(json_obj)
@@ -151,7 +163,9 @@ def sql_schedules(request, course):
         else:
             final_arr = general_statements('Schedules')
 
-        return JsonResponse(final_arr, safe=False)
+        final_resp = {"schedules": final_arr}
+
+        return JsonResponse(final_resp, safe=False)
     except:
         return JsonResponse({"message": "An error occurred"}, status=500)
 
@@ -710,7 +724,7 @@ def course_search(request):
 
         filter_results = dict()
         filter_results['departments'] = list(unique_depts)
-        filter_results['courses'] = json_res
+        final_results['courses'] = json_res
 
         final_results['filters'] = filter_results
 

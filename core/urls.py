@@ -3,7 +3,7 @@ from . import views
 
 urlpatterns = [
     path('api/auth/', include('authentication.urls')),
-    path("", views.index, name="index"),
+    # path("", views.index, name="index"),
     ##### SEARCH ENDPOINTS ########
     path("courses/search/", views.course_search),
     path("courses/<str:course>/", views.sql_courses),
