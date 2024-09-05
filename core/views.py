@@ -220,6 +220,10 @@ def summary(request, course):
                 partial_json = auxiliary_json(dept, csn)
                 finalized_json = row_merge([json_data[0], partial_json])
 
+                # pull tags too
+                tags = pull_reviews(csn, dept, comments=False)
+                finalized_json['tags'] = tags['filters']['tags']
+
                 return JsonResponse(finalized_json, safe=False)
             else:
                 return JsonResponse({"message": "Specified course not found"}, status=status.HTTP_404_NOT_FOUND)
@@ -297,7 +301,7 @@ def auxiliary_json(dept, csn):
         final_json = row_merge(
             [averages, ease_dist, grade_dist, quality_dist, rating_dist])
 
-    final_json['course number'] = csn
+    final_json['course_number'] = csn
     final_json['department'] = dept
     return final_json
 
@@ -503,16 +507,21 @@ def professor_sql_schedules(request, professor_id):
                         'Users', {'id': json_obj['professor_id']}, ['name'])
                     merged = [json_obj, prof_data[0]]
                     final_json = row_merge(merged)
+
+                    # select course title too
+                    course_title = where("Courses", {"course_number": json_obj['course_number'], "department": json_obj['department']})
+                    final_json['course_title'] = course_title[0]['name']
                     final_arr.append(final_json)
                 else:
                     final_arr.append(json_obj)
 
         else:
             final_arr = general_statements('Schedules')
+        final_json = {"schedules": final_arr}
 
         if json_data is None:
             return JsonResponse({"message": "An error occurred"}, status=status.HTTP_404_NOT_FOUND)
-        return JsonResponse(final_arr, safe=False)
+        return JsonResponse(final_json, safe=False)
     except:
         return JsonResponse({"message": "An error occurred"}, status=500)
 
@@ -531,6 +540,10 @@ def prof_summary(request, professor_id):
                 partial_json = prof_auxiliary_json(prof_id)
                 if len(partial_json) > 0:
                     finalized_json = row_merge([json_data[0], partial_json])
+                
+                    # pull tags too
+                    tags = prof_pull_reviews(prof_id, comments=False)
+                    finalized_json['tags'] = tags['tags']
 
                 return JsonResponse(finalized_json, safe=False)
             else:
@@ -636,13 +649,18 @@ def prof_reviews(request, professor_id):
                         critiques['upvote'] += 1
                     else:
                         critiques['downvote'] += 1
-                json_obj['critics'] = critiques
+                json_obj['votes'] = critiques
 
             ''' add comments '''
             if comments and comments.capitalize() == "True":
                 comments = where('comments', {
                     'review_id': json_obj['review_id']})
                 json_obj['comments'] = comments
+            else:
+                json_obj['comments'] = None
+            
+            # change "review_id" to "id"
+            json_obj['id'] = json_obj.pop('review_id')
 
         if count < limit:
             final_res['pages'] = 1
@@ -751,7 +769,7 @@ def prof_search(request):
 
         vars = (search, search, )
         query = """
-            SELECT name,email, similarity(name, %s) AS search_results
+            SELECT name,email,id, similarity(name, %s) AS search_results
             FROM users
             WHERE name %% %s """
         count_query = "SELECT COUNT(*) as total_count FROM users WHERE name %% %s"
@@ -773,7 +791,7 @@ def prof_search(request):
 
         final_results['pages'] = (
             count // limit) if count % limit == 0 else (count // limit) + 1
-        final_results['courses'] = json_res
+        final_results['professors'] = json_res
 
         return JsonResponse(final_results, safe=False)
     except:
