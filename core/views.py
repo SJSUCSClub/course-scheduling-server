@@ -295,10 +295,10 @@ def auxiliary_json(dept, csn):
             ease_dist, 'ease_distribution')
 
         ''' grade distribution '''
-        query = "SELECT get_course_grade_distribution(%s, %s) as grade_distibution"
+        query = "SELECT get_course_grade_distribution(%s, %s) as grade_distribution"
         grade_dist = query_execution(query, (dept, csn))
-        grade_dist['grade_distibution'] = string_to_list_int(
-            grade_dist, 'grade_distibution')
+        grade_dist['grade_distribution'] = string_to_list_int(
+            grade_dist, 'grade_distribution')
 
         ''' quality distribution '''
         query = "SELECT get_course_quality_distribution(%s, %s) as quality_distribution"
