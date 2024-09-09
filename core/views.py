@@ -103,7 +103,8 @@ def pull_reviews(csn, dept, comments, page=None, limit=None, tags=None):
             int(limit) if not None else 10)
     filter_results['tags'] = list(unique_tags)
     res['filters'] = filter_results
-    res['reviews'] = final_arr
+    res['items'] = final_arr
+    res['page'] = page
 
     return res
 
@@ -175,7 +176,8 @@ def sql_schedules(request, course):
         else:
             final_arr = general_statements('Schedules')
 
-        final_resp["schedules"] = final_arr
+        final_resp["items"] = final_arr
+        final_resp['page'] = page
 
         return JsonResponse(final_resp, safe=False)
     except:
@@ -421,7 +423,7 @@ def prof_pull_reviews(prof_id, comments, page=None, limit=None, tags=None):
     final_arr = []
     unique_tags = set()
     res = dict()
-    res['total_reviews'] = len(init_json)
+    res['total_results'] = len(init_json)
 
     for json_obj in init_json:
         if json_obj['tags']:
@@ -478,8 +480,9 @@ def prof_pull_reviews(prof_id, comments, page=None, limit=None, tags=None):
         final_arr.append(json_obj)
 
     res['pages'] = len(init_json) // limit + (1 if len(init_json) % limit != 0 else 0)
-    res['tags'] = list(unique_tags)
-    res['reviews'] = final_arr
+    res['page'] = page
+    res['filters'] = {"tags": list(unique_tags)}
+    res['items'] = final_arr
 
     return res
 
@@ -545,7 +548,8 @@ def professor_sql_schedules(request, professor_id):
 
         else:
             final_arr = general_statements('Schedules')
-        final_resp['schedules'] = final_arr
+        final_resp['items'] = final_arr
+        final_resp['page'] = page
 
         if json_data is None:
             return JsonResponse({"message": "An error occurred"}, status=status.HTTP_404_NOT_FOUND)
@@ -698,7 +702,8 @@ def prof_reviews(request, professor_id):
         filter_results = dict()
         filter_results['tags'] = list(unique_tags)
         final_res['filters'] = filter_results
-        final_res['reviews'] = json_res
+        final_res['items'] = json_res
+        final_res['page'] = page
 
         return JsonResponse(final_res, safe=False)
     except:
@@ -768,7 +773,8 @@ def course_search(request):
 
         filter_results = dict()
         filter_results['departments'] = list(unique_depts)
-        final_results['courses'] = json_res
+        final_results['items'] = json_res
+        final_results['page'] = page
 
         final_results['filters'] = filter_results
 
@@ -816,7 +822,8 @@ def prof_search(request):
         final_results['total_results'] = count
 
         final_results['pages'] = (count // limit)  + (1 if count % limit != 0 else 0)
-        final_results['professors'] = json_res
+        final_results['page'] = page
+        final_results['items'] = json_res
 
         return JsonResponse(final_results, safe=False)
     except:
