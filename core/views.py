@@ -139,6 +139,8 @@ def sql_schedules(request, course):
         if page is None:
             page = 1
             limit = DEFAULT_LIMIT
+        else:
+            page = int(page)
 
         if limit and limit not in LIMITS:
             limit = DEFAULT_LIMIT
@@ -515,6 +517,8 @@ def professor_sql_schedules(request, professor_id):
         if page is None:
             page = 1
             limit = DEFAULT_LIMIT
+        else:
+            page = int(page)
 
         if limit and limit not in LIMITS:
             limit = DEFAULT_LIMIT
@@ -616,6 +620,8 @@ def prof_reviews(request, professor_id):
         if page is None:
             page = 1
             limit = DEFAULT_LIMIT
+        else:
+            page = int(page)
 
         if limit and limit not in LIMITS:
             limit = DEFAULT_LIMIT
@@ -713,7 +719,7 @@ def prof_reviews(request, professor_id):
 def course_search(request):
     try:
         search = request.GET.get('search', "")
-        page = request.GET.get('page', 1)
+        page = int(request.GET.get('page', 1))
         limit = request.GET.get('limit', DEFAULT_LIMIT)
         dept = request.GET.get('department')
 
@@ -788,16 +794,13 @@ def course_search(request):
 def prof_search(request):
     try:
         search = request.GET.get('search', "")
-        page = request.GET.get('page', 1)
+        page = int(request.GET.get('page', 1))
         limit = request.GET.get('limit', DEFAULT_LIMIT)
 
         if limit and limit not in LIMITS:
             limit = DEFAULT_LIMIT
         elif limit and limit in LIMITS:
             limit = int(limit)
-
-        if type(page) == str:
-            page = 1
 
         vars = (search, search, )
         query = """
@@ -836,7 +839,7 @@ def prof_search(request):
 def schedule_search(request):
     try:
         search = request.GET.get('search', "")
-        page = request.GET.get('page', 1)
+        page = int(request.GET.get('page', 1))
         limit = request.GET.get('limit', DEFAULT_LIMIT)
         term = request.GET.get('term')
         year = request.GET.get('year')
