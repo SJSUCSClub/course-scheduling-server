@@ -1,14 +1,10 @@
-from django.shortcuts import render
 import json
 from core.sql_funcs import *
 from django.http.response import JsonResponse
-from rest_framework.parsers import JSONParser
 from rest_framework import status
 from django.db import connection
-from core.models import Users, Courses, Reviews, Schedules
 # from core.serializers import CourseSerialized, UsersSerialized, ReviewsSerialized, ReviewCommentsSerialized, SchedulesSerialized
 from rest_framework.decorators import api_view
-from django.http import HttpResponse
 import re
 
 
@@ -19,10 +15,10 @@ def pull_reviews(csn, dept, comments, page=None, limit=None, tags=None):
         if limit:
             limit = int(limit)
         else:
-            limit = 10
+            limit = DEFAULT_LIMIT
     else:
         page = 1
-        limit = 10
+        limit = DEFAULT_LIMIT
     json_data = where(
         'Reviews', {'course_number': csn, 'department': dept}, page=page,
         limit=limit, tags=tags
@@ -107,7 +103,8 @@ def pull_reviews(csn, dept, comments, page=None, limit=None, tags=None):
             int(limit) if not None else 10)
     filter_results['tags'] = list(unique_tags)
     res['filters'] = filter_results
-    res['reviews'] = final_arr
+    res['items'] = final_arr
+    res['page'] = page
 
     return res
 
@@ -136,16 +133,32 @@ def sql_courses(request, course):
 @api_view(['GET'])
 def sql_schedules(request, course):
     try:
+        page = request.GET.get('page')
+        limit = request.GET.get('limit')
+        
+        if page is None:
+            page = 1
+            limit = DEFAULT_LIMIT
+
+        if limit and limit not in LIMITS:
+            limit = DEFAULT_LIMIT
+        elif limit:
+            limit = int(limit)
+
         course = course.split('-')
         csn = course[-1]
         dept = course[0]
+        final_resp = {}
 
         if csn is not None and dept is not None:
             course_title = where("Courses", {"course_number": csn, "department": dept})
             course_title = course_title[0]['name']
 
-            json_data = where(
-                'Schedules', {'course_number': csn, 'department': dept})
+            full_json = where("Schedules", {"course_number": csn, "department": dept})
+            final_resp['total_results'] = len(full_json)
+            final_resp['pages'] = len(full_json) // limit + (1 if len(full_json) % limit > 0 else 0)
+
+            json_data = where('Schedules', {'course_number': csn, 'department': dept}, page=page, limit=limit)
 
             final_arr = []
             for json_obj in json_data:
@@ -163,7 +176,8 @@ def sql_schedules(request, course):
         else:
             final_arr = general_statements('Schedules')
 
-        final_resp = {"schedules": final_arr}
+        final_resp["items"] = final_arr
+        final_resp['page'] = page
 
         return JsonResponse(final_resp, safe=False)
     except:
@@ -392,10 +406,10 @@ def prof_pull_reviews(prof_id, comments, page=None, limit=None, tags=None):
         if limit:
             limit = int(limit)
         else:
-            limit = 10
+            limit = DEFAULT_LIMIT
     else:
         page = 1
-        limit = 10
+        limit = DEFAULT_LIMIT
 
     json_data = where(
         'Reviews', {'professor_id': prof_id}, page=page,
@@ -409,7 +423,7 @@ def prof_pull_reviews(prof_id, comments, page=None, limit=None, tags=None):
     final_arr = []
     unique_tags = set()
     res = dict()
-    res['total_reviews'] = len(init_json)
+    res['total_results'] = len(init_json)
 
     for json_obj in init_json:
         if json_obj['tags']:
@@ -465,9 +479,10 @@ def prof_pull_reviews(prof_id, comments, page=None, limit=None, tags=None):
 
         final_arr.append(json_obj)
 
-    res['pages'] = len(init_json) // (int(limit) if not None else 10)
-    res['tags'] = list(unique_tags)
-    res['reviews'] = final_arr
+    res['pages'] = len(init_json) // limit + (1 if len(init_json) % limit != 0 else 0)
+    res['page'] = page
+    res['filters'] = {"tags": list(unique_tags)}
+    res['items'] = final_arr
 
     return res
 
@@ -494,11 +509,27 @@ def sql_professors(request, professor_id):
 @api_view(['GET'])
 def professor_sql_schedules(request, professor_id):
     try:
+        page = request.GET.get('page')
+        limit = request.GET.get('limit', DEFAULT_LIMIT)
+
+        if page is None:
+            page = 1
+            limit = DEFAULT_LIMIT
+
+        if limit and limit not in LIMITS:
+            limit = DEFAULT_LIMIT
+        elif limit:
+            limit = int(limit)
+
         prof_id = professor_id
+        final_resp = {}
 
         if prof_id is not None:
-            json_data = where(
-                'Schedules', {'professor_id': prof_id})
+            full_json = where('Schedules', {'professor_id': prof_id})
+            final_resp['total_results'] = len(full_json)
+            final_resp['pages'] = len(full_json) // limit + (1 if len(full_json) % limit > 0 else 0)
+
+            json_data = where('Schedules', {'professor_id': prof_id}, page=page, limit=limit)
 
             final_arr = []
             for json_obj in json_data:
@@ -517,11 +548,12 @@ def professor_sql_schedules(request, professor_id):
 
         else:
             final_arr = general_statements('Schedules')
-        final_json = {"schedules": final_arr}
+        final_resp['items'] = final_arr
+        final_resp['page'] = page
 
         if json_data is None:
             return JsonResponse({"message": "An error occurred"}, status=status.HTTP_404_NOT_FOUND)
-        return JsonResponse(final_json, safe=False)
+        return JsonResponse(final_resp, safe=False)
     except:
         return JsonResponse({"message": "An error occurred"}, status=500)
 
@@ -578,15 +610,15 @@ def prof_reviews(request, professor_id):
 
     try:
         page = request.GET.get('page')
-        limit = request.GET.get('limit')
+        limit = request.GET.get('limit', DEFAULT_LIMIT)
         tags = request.GET.getlist('tags')
 
         if page is None:
             page = 1
-            limit = 10
+            limit = DEFAULT_LIMIT
 
-        if limit and limit not in ['3', '10', '20', '50']:
-            limit = 10
+        if limit and limit not in LIMITS:
+            limit = DEFAULT_LIMIT
         elif limit:
             limit = int(limit)
 
@@ -665,13 +697,13 @@ def prof_reviews(request, professor_id):
         if count < limit:
             final_res['pages'] = 1
         else:
-            final_res['pages'] = (count // (int(limit) if not None else 10)) if (count % int(
-                limit) == 0) else (count // (int(limit) if not None else 10)) + 1
+            final_res['pages'] = (count // limit)  + (1 if (count % limit != 0) else 0)
 
         filter_results = dict()
         filter_results['tags'] = list(unique_tags)
         final_res['filters'] = filter_results
-        final_res['reviews'] = json_res
+        final_res['items'] = json_res
+        final_res['page'] = page
 
         return JsonResponse(final_res, safe=False)
     except:
@@ -682,12 +714,12 @@ def course_search(request):
     try:
         search = request.GET.get('search', "")
         page = request.GET.get('page', 1)
-        limit = request.GET.get('limit', 10)
+        limit = request.GET.get('limit', DEFAULT_LIMIT)
         dept = request.GET.get('department')
 
-        if limit and limit != 10 and limit not in ['3', '10', '20', '50']:
-            limit = 10
-        elif limit and limit in ['3', '10', '20', '50']:
+        if limit and limit not in LIMITS:
+            limit = DEFAULT_LIMIT
+        elif limit and limit in LIMITS:
             limit = int(limit)
 
         # if type(page) == str:
@@ -726,7 +758,7 @@ def course_search(request):
 
         query += """ LIMIT %s OFFSET %s """
 
-        vars += (limit, (int(page) - 1)*int(limit), )
+        vars += (limit, (int(page) - 1)*limit, )
 
         data, rows = run_sql(query, vars)
         json_res = dictionify(data, rows)
@@ -737,12 +769,12 @@ def course_search(request):
         for json_obj in init_json:
             unique_depts.add(json_obj['department'])
 
-        final_results['pages'] = (
-            count // limit) if count % limit == 0 else (count // limit) + 1
+        final_results['pages'] = (count // limit) + (1 if count % limit != 0 else 0)
 
         filter_results = dict()
         filter_results['departments'] = list(unique_depts)
-        final_results['courses'] = json_res
+        final_results['items'] = json_res
+        final_results['page'] = page
 
         final_results['filters'] = filter_results
 
@@ -757,11 +789,11 @@ def prof_search(request):
     try:
         search = request.GET.get('search', "")
         page = request.GET.get('page', 1)
-        limit = request.GET.get('limit', 10)
+        limit = request.GET.get('limit', DEFAULT_LIMIT)
 
-        if limit and limit != 10 and limit not in ['3', '10', '20', '50']:
-            limit = 10
-        elif limit and limit in ['3', '10', '20', '50']:
+        if limit and limit not in LIMITS:
+            limit = DEFAULT_LIMIT
+        elif limit and limit in LIMITS:
             limit = int(limit)
 
         if type(page) == str:
@@ -781,7 +813,7 @@ def prof_search(request):
         count = count[0][0]
         query += """ LIMIT %s OFFSET %s """
 
-        vars += (limit, (int(page) - 1)*int(limit), )
+        vars += (limit, (int(page) - 1)*limit, )
 
         data, rows = run_sql(query, vars)
         json_res = dictionify(data, rows)
@@ -789,9 +821,9 @@ def prof_search(request):
         final_results = dict()
         final_results['total_results'] = count
 
-        final_results['pages'] = (
-            count // limit) if count % limit == 0 else (count // limit) + 1
-        final_results['professors'] = json_res
+        final_results['pages'] = (count // limit)  + (1 if count % limit != 0 else 0)
+        final_results['page'] = page
+        final_results['items'] = json_res
 
         return JsonResponse(final_results, safe=False)
     except:
@@ -805,7 +837,7 @@ def schedule_search(request):
     try:
         search = request.GET.get('search', "")
         page = request.GET.get('page', 1)
-        limit = request.GET.get('limit', 10)
+        limit = request.GET.get('limit', DEFAULT_LIMIT)
         term = request.GET.get('term')
         year = request.GET.get('year')
         professor_name = request.GET.get('professor_name')
@@ -814,9 +846,9 @@ def schedule_search(request):
         moi = request.GET.get('mode_of_instruction')
         units = request.GET.getlist('units')
 
-        if limit and limit != 10 and limit not in ['3', '10', '20', '50']:
-            limit = 10
-        elif limit and limit in ['3', '10', '20', '50']:
+        if limit and limit not in LIMITS:
+            limit = DEFAULT_LIMIT
+        elif limit and limit in LIMITS:
             limit = int(limit)
 
         where_cases = {'term': term, 'year': year, 'professor_name': professor_name,
@@ -861,7 +893,7 @@ def schedule_search(request):
         init_json = dictionify(data, rows)
         # count = count[0][0]
         query += " LIMIT %s OFFSET %s"
-        vars += (limit, (int(page) - 1)*int(limit), )
+        vars += (limit, (int(page) - 1)*limit, )
 
         data, rows = run_sql(query, vars)
         json_res = dictionify(data, rows)
@@ -888,8 +920,7 @@ def schedule_search(request):
         final_result = dict()
         count = len(init_json)
         final_result['total_results'] = count
-        final_result['pages'] = (
-            count // limit) if count % limit == 0 else (count // limit) + 1
+        final_result['pages'] = (count // limit) + (1 if count % limit != 0 else 0)
         filter_result = dict()
         filter_result['term'] = list(uterms)
         filter_result['year'] = list(uyears)

@@ -2,6 +2,9 @@ import json
 import datetime
 from django.db import connection
 
+# limit-related constants
+DEFAULT_LIMIT = 3
+LIMITS = ["3", "10", "20", "50"]
 
 ''' A list of key value pairs for each item in a row and its corresponding column name'''
 
@@ -94,8 +97,8 @@ def where(table, columns, resulting_cols=['*'], like=False, Or=False, orderby=Fa
         query = orderby(query, orderby_col)
 
     if page:
-        if limit is None or limit not in ['10', '20', '50']:
-            limit = 10
+        if limit is None or str(limit) not in LIMITS:
+            limit = DEFAULT_LIMIT
         query += " LIMIT %s OFFSET %s"
         col_tuple += (limit, (int(page) - 1)*int(limit), )
 
