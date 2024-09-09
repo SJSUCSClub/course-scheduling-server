@@ -105,9 +105,9 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'course_scheduler',
-        'USER': os.getenv("LOCAL_USER"),
-        'PASSWORD': os.getenv("LOCAL_PASSWORD"),
-        'HOST': os.getenv("LOCAL_HOST"),
+        'USER': os.getenv("DB_USER"),
+        'PASSWORD': os.getenv("DB_PASSWORD"),
+        'HOST': os.getenv("DB_HOST"),
         'PORT': os.getenv("DB_PORT")
     }
 }
