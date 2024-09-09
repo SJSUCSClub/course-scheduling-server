@@ -7,8 +7,6 @@ from django.db import connection
 from rest_framework.decorators import api_view
 import re
 
-DEFAULT_LIMIT = 3
-LIMITS = ["3", "10", "20", "50"]
 
 def pull_reviews(csn, dept, comments, page=None, limit=None, tags=None):
 

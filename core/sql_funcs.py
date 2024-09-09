@@ -2,6 +2,9 @@ import json
 import datetime
 from django.db import connection
 
+# limit-related constants
+DEFAULT_LIMIT = 3
+LIMITS = ["3", "10", "20", "50"]
 
 ''' A list of key value pairs for each item in a row and its corresponding column name'''
 
