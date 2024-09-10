@@ -2,6 +2,9 @@ import json
 import datetime
 from django.db import connection
 
+# limit-related constants
+DEFAULT_LIMIT = 3
+LIMITS = ["3", "10", "20", "50"]
 
 ''' A list of key value pairs for each item in a row and its corresponding column name'''
 
@@ -68,8 +71,9 @@ def orderby(query, orderby_col):
 '''Where statements'''
 
 
-def where(table, columns, resulting_cols=['*'], like=False, Or=False, orderby=False, orderby_col=None):
+def where(table, columns, resulting_cols=['*'], like=False, Or=False, orderby=False, orderby_col=None, page=None, limit=None, tags=None):
     select_cols = ','.join(resulting_cols)
+
     query = f'SELECT {select_cols} FROM {table} WHERE'
     col_list = []
     col_tuple = tuple()
@@ -82,6 +86,14 @@ def where(table, columns, resulting_cols=['*'], like=False, Or=False, orderby=Fa
         for name, val in columns.items():
             col_tuple += (val,)
             col_list.append(' ' + name + '=%s')
+
+    if tags and len(tags) > 0:
+        new_tags = []
+        for tag in tags:
+            new_tags.append("'" + tag + "'")
+        tag_str = '(array[' + ','.join(new_tags) + '])::tag_enum[]'
+        # col_tuple += ('"tags"', )
+        col_list.append(tag_str + '<@tags')
     if Or:
         col_join = ' OR '.join(col_list)
     else:
@@ -92,7 +104,14 @@ def where(table, columns, resulting_cols=['*'], like=False, Or=False, orderby=Fa
     if orderby and orderby_col is not None:
         query = orderby(query, orderby_col)
 
+    if page:
+        if limit is None or str(limit) not in LIMITS:
+            limit = DEFAULT_LIMIT
+        query += " LIMIT %s OFFSET %s"
+        col_tuple += (limit, (int(page) - 1)*int(limit), )
+
     data, rows = run_sql(query, col_tuple)
+
     return dictionify(data, rows)
 
 
