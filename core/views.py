@@ -54,6 +54,8 @@ def pull_reviews(csn, dept, comments, page=None, limit=None, tags=None):
             # print(temp)
             temp = temp.split(',')
             json_obj['tags'] = temp
+        else:
+            json_obj['tags'] = []
 
         ''' Get review critics '''
         if json_obj['id'] is not None:
@@ -454,6 +456,8 @@ def prof_pull_reviews(prof_id, comments, page=None, limit=None, tags=None):
                 # print(t)
                 unique_tags.add(t)
             json_obj['tags'] = temp
+        else:
+            json_obj['tags'] = []
 
         ''' Get review critics '''
         if json_obj['id'] is not None:
@@ -579,7 +583,7 @@ def prof_summary(request, professor_id):
                 
                     # pull tags too
                     tags = prof_pull_reviews(prof_id, comments=False)
-                    finalized_json['tags'] = tags['tags']
+                    finalized_json['tags'] = tags['filters']['tags']
 
                 return JsonResponse(finalized_json, safe=False)
             else:
@@ -675,6 +679,8 @@ def prof_reviews(request, professor_id):
                     # print(t)
                     unique_tags.add(t)
                 json_obj['tags'] = temp
+            else:
+                json_obj['tags'] = []
 
             ''' add upvots and downvotes'''
             if json_obj['review_id'] is not None:
