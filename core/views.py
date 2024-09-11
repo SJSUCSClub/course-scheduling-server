@@ -725,6 +725,7 @@ def prof_reviews(request, professor_id):
 
 def course_search(request):
     try:
+        # extract / process search
         search = request.GET.get('search', "")
         page = int(request.GET.get('page', 1))
         limit = request.GET.get('limit', DEFAULT_LIMIT)
@@ -735,10 +736,9 @@ def course_search(request):
         elif limit and limit in LIMITS:
             limit = int(limit)
 
-        # if type(page) == str:
-        #     page = 1
-
+        # handle search
         if search:
+            # search, with a similarity of 45%
             with connection.cursor() as cursor:
                 cursor.execute('SELECT set_limit(0.45)')
 
@@ -752,8 +752,6 @@ def course_search(request):
             union select *, similarity(name, %s) as sml from courses where name %% %s
             """
 
-            # count_query = "SELECT COUNT(*) as total_count FROM courses WHERE name %% %s"
-            # count_vars = (search, )
             if dept:
                 tmp = " AND department = %s"
                 query1 += tmp
@@ -763,7 +761,6 @@ def course_search(request):
 
             end_query = ") as t order by sml desc"
 
-            # query += """ORDER BY search_results DESC, name"""
             query = query1 + query2 + end_query
             vars = query1_vars + query2_vars
             init_query, rows = run_sql(query, vars)
@@ -784,15 +781,11 @@ def course_search(request):
                 unique_depts.add(json_obj['department'])
 
             final_results['pages'] = (count // limit) + (1 if count % limit != 0 else 0)
-
-            filter_results = dict()
+            filter_results = {}
             filter_results['departments'] = list(unique_depts)
             final_results['items'] = json_res
             final_results['page'] = page
-
             final_results['filters'] = filter_results
-
-            return JsonResponse(final_results, safe=False)
         elif dept:
             # only department specified, so just select * where department matches
             count_data, _ = run_sql("SELECT COUNT(*) FROM courses WHERE department = %s", (dept, ))
@@ -806,8 +799,6 @@ def course_search(request):
             final_results['page'] = page
             final_results['items'] = data
             final_results['filters'] = {'departments': [dept] if count_data[0][0] > 0 else []}
-
-            return JsonResponse(final_results, safe=False)
         else:
             # no search or department specified, so just select *
             # make queries
@@ -824,9 +815,8 @@ def course_search(request):
             final_results['page'] = page
             final_results['items'] = dictionify(paged_data, rows)
 
-            return JsonResponse(final_results, safe=False)
-    except Exception as e:
-        raise e
+        return JsonResponse(final_results)
+    except:
         return JsonResponse({"message": "An error occurred"}, status=500)
 
 # professor search
@@ -843,33 +833,44 @@ def prof_search(request):
         elif limit and limit in LIMITS:
             limit = int(limit)
 
-        vars = (search, search, )
-        query = """
-            SELECT name,email,id, similarity(name, %s) AS search_results
-            FROM users
-            WHERE name %% %s """
-        count_query = "SELECT COUNT(*) as total_count FROM users WHERE name %% %s"
-        count_vars = (search, )
+        if search:
+            vars = (search, search, )
+            query = """
+                SELECT name,email,id, similarity(name, %s) AS search_results
+                FROM users
+                WHERE name %% %s """
+            count_query = "SELECT COUNT(*) as total_count FROM users WHERE name %% %s"
+            count_vars = (search, )
 
-        query += """ORDER BY search_results DESC, name"""
+            query += """ORDER BY search_results DESC, name"""
 
-        count, _ = run_sql(count_query, count_vars)
-        count = count[0][0]
-        query += """ LIMIT %s OFFSET %s """
+            count, _ = run_sql(count_query, count_vars)
+            count = count[0][0]
+            query += """ LIMIT %s OFFSET %s """
 
-        vars += (limit, (int(page) - 1)*limit, )
+            vars += (limit, (int(page) - 1)*limit, )
 
-        data, rows = run_sql(query, vars)
-        json_res = dictionify(data, rows)
+            data, rows = run_sql(query, vars)
+            json_res = dictionify(data, rows)
 
-        final_results = dict()
-        final_results['total_results'] = count
+            final_results = dict()
+            final_results['total_results'] = count
 
-        final_results['pages'] = (count // limit)  + (1 if count % limit != 0 else 0)
-        final_results['page'] = page
-        final_results['items'] = json_res
+            final_results['pages'] = (count // limit)  + (1 if count % limit != 0 else 0)
+            final_results['page'] = page
+            final_results['items'] = json_res
+        else:
+            count, _ = run_sql("SELECT COUNT(*) FROM users WHERE is_professor = true")
+            data, rows = run_sql("SELECT * FROM users LIMIT %s OFFSET %s", (limit, (int(page) - 1)*limit, ))
+            data = dictionify(data, rows)
 
-        return JsonResponse(final_results, safe=False)
+            final_results = {}
+            final_results['total_results'] = count[0][0]
+            final_results['pages'] = count[0][0] // limit + (1 if count[0][0] % limit != 0 else 0)
+            final_results['page'] = page
+            final_results['items'] = data
+
+        return JsonResponse(final_results)
     except:
         return JsonResponse({"message": "An error occurred"}, status=500)
 
