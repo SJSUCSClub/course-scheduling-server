@@ -11,6 +11,7 @@ from rest_framework.decorators import api_view
 from django.http import HttpResponse
 import re
 
+from core.daos import course_select_summary, course_select_ease_distribution, course_select_grade_distribution, course_select_quality_distribution, course_select_rating_distribution, course_select_average_grade, course_select_average_ease, course_select_average_quality, course_select_average_rating, course_select_total_reviews, course_select_take_again_percent, professor_select_ease_distribution, professor_select_grade_distribution, professor_select_quality_distribution, professor_select_rating_distribution, professor_select_average_grade, professor_select_average_ease, professor_select_average_quality, professor_select_average_rating, professor_select_total_reviews, professor_select_take_again_percent
 
 def pull_reviews(csn, dept, comments, page=None, limit=None, tags=None):
 
@@ -206,32 +207,32 @@ def review_stats(request, course):
 
 
 @api_view(['GET'])
-def summary(request, course):
+def course_summary_controller(request, course):
     try:
         course = course.split('-')
         csn = course[-1]
         dept = course[0]
         if csn is not None and dept is not None:
-            json_data = where(
-                'Courses', {'course_number': csn, 'department': dept})
+            course_select_summary(dept, csn)
+            json_data = course_select_summary(dept, csn)
 
             # print(json_data)
             if len(json_data) > 0:
-                partial_json = auxiliary_json(dept, csn)
-                finalized_json = row_merge([json_data[0], partial_json])
+                # partial_json = auxiliary_json(dept, csn)
+                # finalized_json = row_merge([json_data[0], partial_json])
 
                 # pull tags too
                 tags = pull_reviews(csn, dept, comments=False)
-                finalized_json['tags'] = tags['filters']['tags']
+                json_data['tags'] = tags['filters']['tags']
 
-                return JsonResponse(finalized_json, safe=False)
+                return JsonResponse(json_data, safe=False)
             else:
                 return JsonResponse({"message": "Specified course not found"}, status=status.HTTP_404_NOT_FOUND)
 
         else:
             return JsonResponse({"message": " course_number and or department not specified"}, status=status.HTTP_404_NOT_FOUND)
-    except:
-        return JsonResponse({"message": "An error occurred"}, status=500)
+    except Exception as e:
+        return JsonResponse({"message": e.args}, status=500)
 
 
 ''' In the event we need to pull all the comments pertaining to a certain course'''
@@ -261,54 +262,28 @@ def review_comments(request, course):
 
 
 def auxiliary_json(dept, csn):
-    with connection.cursor() as cursor:
-        ''' Initial averages '''
-        query = 'SELECT get_course_average_grade(%s, %s) as avg_grade, get_course_average_quality(%s, %s) as avg_quality, get_course_average_ease(%s, %s) as avg_ease,get_course_take_again_percent(%s, %s) as take_again_percent, get_course_total_reviews(%s, %s) as total_reviews, get_course_average_rating(%s, %s) as avg_rating'
+    stats = {}
+    
+    stats['avg_grade'] = course_select_average_grade(dept, csn)
+    stats['avg_quality'] = course_select_average_quality(dept, csn)
+    stats['avg_ease'] = course_select_average_ease(dept, csn)
+    stats['avg_rating'] = course_select_average_rating(dept, csn)
+    stats['take_again_percent'] = course_select_take_again_percent(dept, csn)
+    stats['total_reviews'] = course_select_total_reviews(dept, csn)
+    stats['ease_distribution'] = course_select_ease_distribution(dept, csn)
+    stats['grade_distribution'] = course_select_grade_distribution(dept, csn)
+    stats['quality_distribution'] = course_select_quality_distribution(dept, csn)
+    stats['rating_distribution'] = course_select_rating_distribution(dept, csn)
 
-        tups = [dept, csn] * 6
-        cursor.execute(query, tuple(tups))
-        rows = [x[0] for x in cursor.description]
-        data = cursor.fetchone()
-
-        json_data = dict(zip(rows, data))
-        json_dump = json.dumps(json_data)
-
-        averages = json.loads(json_dump)
-        ''' ease distribution '''
-        query = "SELECT get_course_ease_distribution(%s, %s) as ease_distribution"
-        ease_dist = query_execution(query, (dept, csn))
-        ease_dist['ease_distribution'] = string_to_list_int(
-            ease_dist, 'ease_distribution')
-
-        ''' grade distribution '''
-        query = "SELECT get_course_grade_distribution(%s, %s) as grade_distibution"
-        grade_dist = query_execution(query, (dept, csn))
-        grade_dist['grade_distibution'] = string_to_list_int(
-            grade_dist, 'grade_distibution')
-
-        ''' quality distribution '''
-        query = "SELECT get_course_quality_distribution(%s, %s) as quality_distribution"
-        quality_dist = query_execution(query, (dept, csn))
-        quality_dist['quality_distribution'] = string_to_list_int(
-            quality_dist, 'quality_distribution')
-
-        ''' rating distribution '''
-        query = "SELECT get_course_rating_distribution(%s, %s) as rating_distribution"
-        rating_dist = query_execution(query, (dept, csn))
-        rating_dist['rating_distribution'] = string_to_list_int(
-            rating_dist, 'rating_distribution')
-
-        final_json = row_merge(
-            [averages, ease_dist, grade_dist, quality_dist, rating_dist])
-
-    final_json['course_number'] = csn
-    final_json['department'] = dept
-    return final_json
+    stats['course_number'] = csn
+    stats['department'] = dept
+    return stats 
 
 
 '''
     params:
         diction - json obj / dictionary
+
         key - specific key containing list
     converts the values to a list of
     comma separated integers
@@ -328,6 +303,7 @@ def query_execution(query, params: tuple):
         rows = [x[0] for x in cursor.description]
 
         data = cursor.fetchall()
+        print('data: ', data)
 
         json_data = dict(zip(rows, data))
         json_dump = json.dumps(json_data)
@@ -342,48 +318,20 @@ def query_execution(query, params: tuple):
 
 
 def prof_auxiliary_json(prof_id):
-    with connection.cursor() as cursor:
-        ''' Initial averages '''
-        query = 'SELECT get_professor_average_grade(%s) as avg_grade, get_professor_average_quality(%s) as avg_quality, get_professor_average_ease(%s) as avg_ease,get_professor_take_again_percent(%s) as take_again_percent, get_professor_total_reviews(%s) as total_reviews, get_professor_average_rating(%s) as avg_rating'
-
-        tups = [prof_id] * 6
-        cursor.execute(query, tuple(tups))
-        rows = [x[0] for x in cursor.description]
-        data = cursor.fetchone()
-
-        json_data = dict(zip(rows, data))
-        json_dump = json.dumps(json_data)
-
-        averages = json.loads(json_dump)
-        ''' ease distribution '''
-        query = "SELECT get_professor_ease_distribution(%s) as ease_distribution"
-        ease_dist = query_execution(query, (prof_id,))
-        ease_dist['ease_distribution'] = string_to_list_int(
-            ease_dist, 'ease_distribution')
-
-        ''' grade distribution '''
-        query = "SELECT get_professor_grade_distribution(%s) as grade_distribution"
-        grade_dist = query_execution(query, (prof_id,))
-        grade_dist['grade_distribution'] = string_to_list_int(
-            grade_dist, 'grade_distribution')
-
-        ''' quality distribution '''
-        query = "SELECT get_professor_quality_distribution(%s) as quality_distribution"
-        quality_dist = query_execution(query, (prof_id,))
-        quality_dist['quality_distribution'] = string_to_list_int(
-            quality_dist, 'quality_distribution')
-
-        ''' rating distribution '''
-        query = "SELECT get_professor_rating_distribution(%s) as rating_distribution"
-        rating_dist = query_execution(query, (prof_id,))
-        rating_dist['rating_distribution'] = string_to_list_int(
-            rating_dist, 'rating_distribution')
-
-        final_json = row_merge(
-            [averages, ease_dist, grade_dist, quality_dist, rating_dist])
-
-    return final_json
-
+    stats = {}
+    print('prof_id: ', type(prof_id))
+    stats['avg_grade'] = professor_select_average_grade(prof_id)
+    stats['avg_quality'] = professor_select_average_quality(prof_id)
+    stats['avg_ease'] = professor_select_average_ease(prof_id)
+    stats['avg_rating'] = professor_select_average_rating(prof_id)
+    stats['take_again_percent'] = professor_select_take_again_percent(prof_id)
+    stats['total_reviews'] = professor_select_total_reviews(prof_id)
+    stats['ease_distribution'] = professor_select_ease_distribution(prof_id)
+    stats['grade_distribution'] = professor_select_grade_distribution(prof_id)
+    stats['quality_distribution'] = professor_select_quality_distribution(prof_id)
+    stats['rating_distribution'] = professor_select_rating_distribution(prof_id)
+    print(stats)
+    return stats 
 
 def prof_pull_reviews(prof_id, comments, page=None, limit=None, tags=None):
 
@@ -551,8 +499,8 @@ def prof_summary(request, professor_id):
 
         else:
             return JsonResponse({"message": " professor_id not specified"}, status=status.HTTP_404_NOT_FOUND)
-    except:
-        return JsonResponse({"message": "An error occurred"}, status=500)
+    except Exception as e:
+        return JsonResponse({"message": e}, status=500)
 
 # professor review stats
 
