@@ -738,61 +738,95 @@ def course_search(request):
         # if type(page) == str:
         #     page = 1
 
-        with connection.cursor() as cursor:
-            cursor.execute('SELECT set_limit(0.45)')
+        if search:
+            with connection.cursor() as cursor:
+                cursor.execute('SELECT set_limit(0.45)')
 
-        query1_vars = (search, search, )
-        query2_vars = (search, search, )
+            query1_vars = (search, search, )
+            query2_vars = (search, search, )
 
-        query1 = """
-            select * from (select *, similarity((department || ' ' || course_number), %s) AS sml from courses where (department || ' ' || course_number) %% %s
+            query1 = """
+                select * from (select *, similarity((department || ' ' || course_number), %s) AS sml from courses where (department || ' ' || course_number) %% %s
+                """
+            query2 = """
+            union select *, similarity(name, %s) as sml from courses where name %% %s
             """
-        query2 = """
-        union select *, similarity(name, %s) as sml from courses where name %% %s
-        """
 
-        # count_query = "SELECT COUNT(*) as total_count FROM courses WHERE name %% %s"
-        # count_vars = (search, )
-        if dept:
-            tmp = " AND department = %s"
-            query1 += tmp
-            query2 += tmp
-            query1_vars += (dept, )
-            query2_vars += (dept, )
+            # count_query = "SELECT COUNT(*) as total_count FROM courses WHERE name %% %s"
+            # count_vars = (search, )
+            if dept:
+                tmp = " AND department = %s"
+                query1 += tmp
+                query2 += tmp
+                query1_vars += (dept, )
+                query2_vars += (dept, )
 
-        end_query = ") as t order by sml desc"
+            end_query = ") as t order by sml desc"
 
-        # query += """ORDER BY search_results DESC, name"""
-        query = query1 + query2 + end_query
-        vars = query1_vars + query2_vars
-        init_query, rows = run_sql(query, vars)
-        init_json = dictionify(init_query, rows)
-        count = len(init_json)
+            # query += """ORDER BY search_results DESC, name"""
+            query = query1 + query2 + end_query
+            vars = query1_vars + query2_vars
+            init_query, rows = run_sql(query, vars)
+            init_json = dictionify(init_query, rows)
+            count = len(init_json)
 
-        query += """ LIMIT %s OFFSET %s """
+            query += """ LIMIT %s OFFSET %s """
 
-        vars += (limit, (int(page) - 1)*limit, )
+            vars += (limit, (int(page) - 1)*limit, )
 
-        data, rows = run_sql(query, vars)
-        json_res = dictionify(data, rows)
+            data, rows = run_sql(query, vars)
+            json_res = dictionify(data, rows)
 
-        unique_depts = set()
-        final_results = dict()
-        final_results['total_results'] = count
-        for json_obj in init_json:
-            unique_depts.add(json_obj['department'])
+            unique_depts = set()
+            final_results = dict()
+            final_results['total_results'] = count
+            for json_obj in init_json:
+                unique_depts.add(json_obj['department'])
 
-        final_results['pages'] = (count // limit) + (1 if count % limit != 0 else 0)
+            final_results['pages'] = (count // limit) + (1 if count % limit != 0 else 0)
 
-        filter_results = dict()
-        filter_results['departments'] = list(unique_depts)
-        final_results['items'] = json_res
-        final_results['page'] = page
+            filter_results = dict()
+            filter_results['departments'] = list(unique_depts)
+            final_results['items'] = json_res
+            final_results['page'] = page
 
-        final_results['filters'] = filter_results
+            final_results['filters'] = filter_results
 
-        return JsonResponse(final_results, safe=False)
-    except:
+            return JsonResponse(final_results, safe=False)
+        elif dept:
+            # only department specified, so just select * where department matches
+            count_data, _ = run_sql("SELECT COUNT(*) FROM courses WHERE department = %s", (dept, ))
+            data, rows = run_sql("SELECT * FROM courses WHERE department = %s LIMIT %s OFFSET %s", (dept, limit, (int(page) - 1)*limit, ))
+            data = dictionify(data, rows)
+            
+            # format results
+            final_results = {}
+            final_results['total_results'] = count_data[0][0]
+            final_results['pages'] = count_data[0][0] // limit + (1 if count_data[0][0] % limit != 0 else 0)
+            final_results['page'] = page
+            final_results['items'] = data
+            final_results['filters'] = {'departments': [dept] if count_data[0][0] > 0 else []}
+
+            return JsonResponse(final_results, safe=False)
+        else:
+            # no search or department specified, so just select *
+            # make queries
+            department_data, department_rows = run_sql("SELECT DISTINCT department FROM courses")
+            count_data, _ = run_sql("SELECT COUNT(*) FROM courses")
+            paged_data, rows = run_sql("SELECT * FROM courses LIMIT %s OFFSET %s", (limit, (int(page) - 1)*limit, ))
+            departments = dictionify(department_data, department_rows)
+
+            # format results
+            final_results = {}
+            final_results['filters'] = {'departments': [row['department'] for row in departments]}
+            final_results['total_results'] = count_data[0][0]
+            final_results['pages'] = count_data[0][0] // limit + (1 if count_data[0][0] % limit != 0 else 0)
+            final_results['page'] = page
+            final_results['items'] = dictionify(paged_data, rows)
+
+            return JsonResponse(final_results, safe=False)
+    except Exception as e:
+        raise e
         return JsonResponse({"message": "An error occurred"}, status=500)
 
 # professor search
