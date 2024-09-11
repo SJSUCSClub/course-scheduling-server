@@ -30,7 +30,14 @@ SECRET_KEY = 'django-insecure-b3e*^d&x89959p%%#ba8_9u3mmb05wjacta9ew0e^u2&0z-47#
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+def get_env_list(env_name:str):
+    tmp = os.getenv(env_name, None)
+    if tmp:
+        return tmp.split(",")
+    return tmp
+
+
+ALLOWED_HOSTS = get_env_list("ALLOWED_HOSTS") or ["*"]
 
 # Application definition
 ACCOUNT_EMAIL_VERIFICATION = "none"
