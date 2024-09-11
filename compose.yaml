@@ -10,6 +10,7 @@ services:
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID?REQUIRED}
       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET?REQUIRED}
       - OATHLIB_INSECURE_TRANSPORT=1
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS?REQUIRED}
     depends_on:
       db:
         condition: service_healthy

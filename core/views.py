@@ -653,7 +653,7 @@ def prof_reviews(request, professor_id):
             new_tags = []
             for tag in tags:
                 new_tags.append("'" + tag + "'")
-            tag_str = '(array[' + ','.join(new_tags) + '])::tag_enum[]'
+            tag_str = 'AND (array[' + ','.join(new_tags) + '])::tag_enum[]'
             query += tag_str + '<@tags '
 
         data, rows = run_sql(query + "limit %s offset %s",
@@ -718,7 +718,8 @@ def prof_reviews(request, professor_id):
         final_res['page'] = page
 
         return JsonResponse(final_res, safe=False)
-    except:
+    except Exception as e:
+        raise e
         return JsonResponse({"message": "An error occurred"}, status=500)
 
 
