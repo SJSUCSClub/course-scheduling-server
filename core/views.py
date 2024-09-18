@@ -137,7 +137,7 @@ def sql_schedules(request, course):
     try:
         page = request.GET.get('page')
         limit = request.GET.get('limit')
-        
+
         if page is None:
             page = 1
             limit = DEFAULT_LIMIT
@@ -580,7 +580,7 @@ def prof_summary(request, professor_id):
                 partial_json = prof_auxiliary_json(prof_id)
                 if len(partial_json) > 0:
                     finalized_json = row_merge([json_data[0], partial_json])
-                
+
                     # pull tags too
                     tags = prof_pull_reviews(prof_id, comments=False)
                     finalized_json['tags'] = tags['filters']['tags']
@@ -702,7 +702,7 @@ def prof_reviews(request, professor_id):
                 json_obj['comments'] = comments
             else:
                 json_obj['comments'] = None
-            
+
             # change "review_id" to "id"
             json_obj['id'] = json_obj.pop('review_id')
 
@@ -791,7 +791,7 @@ def course_search(request):
             count_data, _ = run_sql("SELECT COUNT(*) FROM courses WHERE department = %s", (dept, ))
             data, rows = run_sql("SELECT * FROM courses WHERE department = %s LIMIT %s OFFSET %s", (dept, limit, (int(page) - 1)*limit, ))
             data = dictionify(data, rows)
-            
+
             # format results
             final_results = {}
             final_results['total_results'] = count_data[0][0]
@@ -966,6 +966,7 @@ def schedule_search(request):
         count = len(init_json)
         final_result['total_results'] = count
         final_result['pages'] = (count // limit) + (1 if count % limit != 0 else 0)
+        final_result['page'] = page
         filter_result = dict()
         filter_result['term'] = list(uterms)
         filter_result['year'] = list(uyears)
