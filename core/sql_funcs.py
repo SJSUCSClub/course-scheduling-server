@@ -35,9 +35,17 @@ def run_sql(query, col_tuples=None):
             cursor.execute(query)
         data = cursor.fetchall()
         rows = [x[0] for x in cursor.description]
-
+            
     return data, rows
-
+        
+def run_change_sql(query,col_tuples=None):
+    with connection.cursor() as cursor:
+        if col_tuples is not None:
+            cursor.execute(query, params=col_tuples)
+        else:
+            cursor.execute(query)
+        rows_changed = cursor.rowcount
+        return {"message": f"{rows_changed} row(s) were changed"}
 
 ''' For all "Select *" queries '''
 
@@ -157,3 +165,54 @@ def merge(json1, json2):
     #     json_data.append(dict(zip(rows, result)))
 
     # print(json_data[0])
+
+# def addUser(email,name):
+#     query = f'INSERT INTO Users (id,name,email,is_professor,username) VALUES({email[0:-9]},{name},{email},FALSE,generateUsername())'
+#     return run_change_sql(query)
+
+def calculate_votes(table,columns):
+    col_tuple = tuple(columns.values())
+    query = f"SELECT SUM(CASE WHEN user_review_critique.upvote = true THEN 1 ELSE 0 END) AS upvotes, SUM(CASE WHEN upvote = false THEN 1 ELSE 0 END) AS downvotes FROM {table} WHERE user_id = %s AND review_id = %s"
+    return run_sql(query,col_tuple)
+
+def tags(value):
+    value = value.replace("[","{").replace("]","}").replace("'","")
+    return value
+
+def insert(table, columns):
+    select_cols = ','.join(columns.keys())
+    placeholders = ','.join(['%s'] * len(columns))
+    query = f'INSERT INTO {table}({select_cols}) VALUES ({placeholders})'
+    if 'tags' in columns:
+        columns["tags"] = tags(columns["tags"])
+    col_tuple = tuple(columns.values())
+
+    return run_change_sql(query,col_tuple)
+
+def update(table,columns,where):
+    col_tuple = tuple()
+    if 'tags' in columns:
+        columns["tags"] = tags(columns["tags"])
+    keys = list(columns.keys())
+    conditions = list(where)
+    query = f'UPDATE {table} SET '
+    for key in keys:
+        query+= key + " = %s, "
+        col_tuple+= (columns[key],)
+    query = query.rstrip(", ")
+    query += " WHERE "
+    for condition in conditions:
+        query+= condition + " = %s AND "
+        col_tuple+=(where[condition],)
+    query = query.rstrip("AND ")
+    return run_change_sql(query,col_tuple)
+
+def delete(table,columns):
+    col_tuple = tuple()
+    query = f'DELETE FROM {table} WHERE '
+    keys = list(columns.keys())
+    for key in keys:
+        query+= key + " = %s AND "
+        col_tuple+= (columns[key],)
+    query = query.rstrip("AND ")
+    return run_change_sql(query,col_tuple)

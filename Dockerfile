@@ -12,6 +12,7 @@ COPY core/ core/
 COPY course_scheduling/ course_scheduling/
 COPY manage.py manage.py
 COPY client_secret.json client_secret.json
+COPY script.sh script.sh
 
 # set environment variables
 # (these get re-set by the compose, but they're here for reference)
@@ -24,5 +25,5 @@ ENV ALLOWED_HOSTS=0.0.0.0
 # expose port
 EXPOSE 8000
 
-# run command
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+# run script
+CMD ["/bin/bash", "script.sh"]
