@@ -1,4 +1,4 @@
-from django.urls import path, include, re_path
+from django.urls import path, include
 from . import views
 
 urlpatterns = [
@@ -14,9 +14,18 @@ urlpatterns = [
         "courses/<str:department>/<str:course_number>/summary/",
         views.courses.course_summary_view,
     ),
+    path(
+        "courses/<str:department>/<str:course_number>/schedules/",
+        views.courses.course_schedules_view,
+    ),
+    path(
+        "courses/<str:department>/<str:course_number>/reviews/",
+        views.courses.course_reviews_view,
+    ),
     #     path('courses/<str:course>/reviews/comments', views.review_comments),
     #     path('courses/<str:course>/schedules/', views.sql_schedules),
     #     ############### professor paths ###################
+    path("professors/<str:professor_id>/schedules/", views.professor_schedules_view),
     #     path("professors/search/", views.prof_search),
     #     path("professors/<str:professor_id>/", views.sql_professors),
     #     path("professors/<str:professor_id>/reviews/", views.prof_reviews),
