@@ -58,13 +58,32 @@ def professor_select_rating_distribution(professor_id):
     return fetchone(query, professor_id)
 
 
-def professor_select(
+def professor_search(
     page: int = None,
     limit: int = None,
 ):
     query = "SELECT id, name, email FROM users WHERE is_professor = true"
-
     if page and limit:
         query += f" LIMIT {limit} OFFSET {(page - 1 ) * limit}"
 
     return fetchall(query)
+
+
+def professor_search_count():
+    query = "SELECT COUNT(*) FROM users WHERE is_professor = true"
+    return fetchone(query)[0]
+
+
+def professor_search_by_similarity(query: str, page: int = None, limit: int = None):
+    # TODO - make similarity threshold configurable
+    sql_query = f"SELECT id, name, email FROM users WHERE is_professor = true AND similarity(name, %s) > 0.4 ORDER BY similarity(name, %s) DESC"
+    if page and limit:
+        sql_query += f" LIMIT {limit} OFFSET {(page - 1 ) * limit}"
+
+    return fetchall(sql_query, query, query)
+
+
+def professor_search_by_similarity_count(query: str):
+    # TODO - make similarity threshold configurable
+    sql_query = f"SELECT COUNT(*) FROM users WHERE is_professor = true AND similarity(name, %s) > 0.4"
+    return fetchone(sql_query, query)[0]
