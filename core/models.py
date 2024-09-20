@@ -71,7 +71,6 @@ class Departments(models.Model):
 class Courses(models.Model):
     # The composite primary key (course_number, department) found, that is not supported. The first column is selected.
     course_number = models.TextField(primary_key=True)
-    created_at = models.DateTimeField(auto_now_add=True)
     name = models.TextField()
     description = models.TextField(blank=True, null=True)
     prereqs = models.TextField(blank=True, null=True)

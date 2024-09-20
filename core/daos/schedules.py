@@ -31,7 +31,6 @@ def schedule_select(
 
     if page and limit:
         query += f" LIMIT {limit} OFFSET {(page - 1 ) * limit}"
-    query += ";"
 
     with connection.cursor() as cursor:
         cursor.execute(query, list(filter(lambda x: x is not None, args.values())))

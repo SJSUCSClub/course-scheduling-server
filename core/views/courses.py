@@ -6,6 +6,7 @@ from core.services import (
     get_paginated_reviews_by_course,
     get_paginated_schedules_by_course,
     get_course_reviews_stats,
+    get_course_search_results,
 )
 from .utils import validate_page_limit, try_response
 
@@ -46,6 +47,18 @@ def course_reviews_view(request, department, course_number):
         course_number,
         **validate_page_limit(request),
         tags=request.GET.getlist("tags"),
+    )
+
+    return JsonResponse(json_data)
+
+
+@api_view(["GET"])
+@try_response
+def course_search_view(request):
+    json_data = get_course_search_results(
+        **validate_page_limit(request),
+        query=request.GET.get("query", None),
+        department=request.GET.get("department", None),
     )
 
     return JsonResponse(json_data)
