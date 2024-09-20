@@ -1,101 +1,74 @@
-from django.db import connection
-from .utils import to_where
+from .utils import to_where, fetchone_as_dict, fetchone, fetchall
 from core.models import Courses
 
 
 def course_select_summary(dept, course_number):
-    with connection.cursor() as cursor:
-        query = "SELECT * from courses where department=%s and course_number=%s"
-        cursor.execute(query, (dept, course_number))
-        columns = [col[0] for col in cursor.description]
-        return dict(zip(columns, cursor.fetchone()))
+    query = "SELECT * from courses where department=%s and course_number=%s"
+    return fetchone_as_dict(query, dept, course_number)
 
 
 def course_select_paginated_reviews(dept, course_number, limit, page, tags=[]):
-    with connection.cursor() as cursor:
-        query = """
-            SELECT r.*, u.name AS reviewer_name, u.username AS reviewer_username, p.id AS professor_id, p.name AS professor_name, p.email AS professor_email
-            FROM reviews r
-            LEFT JOIN users u ON r.user_id = u.id
-            INNER JOIN users p ON r.user_id = p.id
-            WHERE r.department=%s AND course_num=%s AND r.tags @> %s::tag_enum[]
-            LIMIT %s
-            OFFSET %s;
-        """
-        cursor.execute(query, (dept, course_number, tags, limit, (page - 1) * limit))
-        columns = [col[0] for col in cursor.description]
-        return dict(zip(columns, cursor.fetchone()))
+    query = """
+        SELECT r.*, u.name AS reviewer_name, u.username AS reviewer_username, p.id AS professor_id, p.name AS professor_name, p.email AS professor_email
+        FROM reviews r
+        LEFT JOIN users u ON r.user_id = u.id
+        INNER JOIN users p ON r.user_id = p.id
+        WHERE r.department=%s AND course_num=%s AND r.tags @> %s::tag_enum[]
+        LIMIT %s
+        OFFSET %s;
+    """
+    return fetchone_as_dict(query, dept, course_number, tags, limit, (page - 1) * limit)
 
 
 # STATS
 def course_select_average_grade(dept, course_number):
-    with connection.cursor() as cursor:
-        query = "SELECT get_course_average_grade(%s, %s)"
-        cursor.execute(query, (dept, course_number))
-        return cursor.fetchone()[0]
+    query = "SELECT get_course_average_grade(%s, %s)"
+    return fetchone(query, dept, course_number)[0]
 
 
 def course_select_average_quality(dept, course_number):
-    with connection.cursor() as cursor:
-        query = "SELECT get_course_average_quality(%s, %s)"
-        cursor.execute(query, (dept, course_number))
-        return cursor.fetchone()[0]
+    query = "SELECT get_course_average_quality(%s, %s)"
+    return fetchone(query, dept, course_number)[0]
 
 
 def course_select_average_ease(dept, course_number):
-    with connection.cursor() as cursor:
-        query = "SELECT get_course_average_ease(%s, %s)"
-        cursor.execute(query, (dept, course_number))
-        return cursor.fetchone()[0]
+    query = "SELECT get_course_average_ease(%s, %s)"
+    return fetchone(query, dept, course_number)[0]
 
 
 def course_select_take_again_percent(dept, course_number):
-    with connection.cursor() as cursor:
-        query = "SELECT get_course_take_again_percent(%s, %s)"
-        cursor.execute(query, (dept, course_number))
-        return cursor.fetchone()[0]
+    query = "SELECT get_course_take_again_percent(%s, %s)"
+    return fetchone(query, dept, course_number)[0]
 
 
 def course_select_total_reviews(dept, course_number):
-    with connection.cursor() as cursor:
-        query = "SELECT get_course_total_reviews(%s, %s)"
-        cursor.execute(query, (dept, course_number))
-        return cursor.fetchone()[0]
+    query = "SELECT get_course_total_reviews(%s, %s)"
+    return fetchone(query, dept, course_number)[0]
 
 
 def course_select_average_rating(dept, course_number):
-    with connection.cursor() as cursor:
-        query = "SELECT get_course_average_rating(%s, %s)"
-        cursor.execute(query, (dept, course_number))
-        return cursor.fetchone()[0]
+    query = "SELECT get_course_average_rating(%s, %s)"
+    return fetchone(query, dept, course_number)[0]
 
 
 def course_select_ease_distribution(dept, course_number):
-    with connection.cursor() as cursor:
-        query = "SELECT * from get_course_ease_distribution(%s, %s)"
-        cursor.execute(query, (dept, course_number))
-        return cursor.fetchone()
+    query = "SELECT * from get_course_ease_distribution(%s, %s)"
+    return fetchone(query, dept, course_number)
 
 
 def course_select_grade_distribution(dept, course_number):
-    with connection.cursor() as cursor:
-        query = "SELECT * from get_course_grade_distribution(%s, %s)"
-        cursor.execute(query, (dept, course_number))
-        return cursor.fetchone()
+    query = "SELECT * from get_course_grade_distribution(%s, %s)"
+    return fetchone(query, dept, course_number)
 
 
 def course_select_quality_distribution(dept, course_number):
-    with connection.cursor() as cursor:
-        query = "SELECT * from get_course_quality_distribution(%s, %s)"
-        cursor.execute(query, (dept, course_number))
-        return cursor.fetchone()
+    query = "SELECT * from get_course_quality_distribution(%s, %s)"
+    return fetchone(query, dept, course_number)
 
 
 def course_select_rating_distribution(dept, course_number):
-    with connection.cursor() as cursor:
-        query = "SELECT * from get_course_rating_distribution(%s, %s)"
-        cursor.execute(query, (dept, course_number))
-        return cursor.fetchone()
+    query = "SELECT * from get_course_rating_distribution(%s, %s)"
+    return fetchone(query, dept, course_number)
 
 
 def course_search_by_filters(
@@ -127,10 +100,7 @@ def course_search_by_filters(
     if page and limit:
         query += f" LIMIT {limit} OFFSET {(page - 1 ) * limit}"
 
-    with connection.cursor() as cursor:
-        cursor.execute(query, list(filter(lambda x: x is not None, args.values())))
-        columns = [col[0] for col in cursor.description]
-        return [dict(zip(columns, row)) for row in cursor.fetchall()]
+    return fetchall(query, *list(filter(lambda x: x is not None, args.values())))
 
 
 def course_search_by_filters_count(
@@ -152,10 +122,7 @@ def course_search_by_filters_count(
     """
     args = locals()
     query = "SELECT COUNT(*) FROM courses" + to_where(**args)
-
-    with connection.cursor() as cursor:
-        cursor.execute(query, list(filter(lambda x: x is not None, args.values())))
-        return cursor.fetchone()[0]
+    return fetchone(query, *list(filter(lambda x: x is not None, args.values())))[0]
 
 
 def course_search_by_filters_departments(
@@ -169,11 +136,7 @@ def course_search_by_filters_departments(
         + to_where(**args)
         + ") GROUP BY department"
     )
-
-    with connection.cursor() as cursor:
-        cursor.execute(query, list(filter(lambda x: x is not None, args.values())))
-        columns = [col[0] for col in cursor.description]
-        return [dict(zip(columns, row)) for row in cursor.fetchall()]
+    return fetchall(query, *list(filter(lambda x: x is not None, args.values())))
 
 
 def course_search_by_similarity(
@@ -212,13 +175,10 @@ def course_search_by_similarity(
     if page and limit:
         full_query += f" LIMIT {limit} OFFSET {(page - 1 ) * limit}"
 
-    with connection.cursor() as cursor:
-        cursor.execute(
-            full_query,
-            [query, *list(filter(lambda x: x is not None, args.values()))] * 2,
-        )
-        columns = [col[0] for col in cursor.description]
-        return [dict(zip(columns, row)) for row in cursor.fetchall()]
+    return fetchall(
+        full_query,
+        *([query, *list(filter(lambda x: x is not None, args.values()))] * 2),
+    )
 
 
 def course_search_by_similarity_count(
@@ -249,12 +209,10 @@ def course_search_by_similarity_count(
         GROUP BY {fields})
     """
 
-    with connection.cursor() as cursor:
-        cursor.execute(
-            full_query,
-            [query, *list(filter(lambda x: x is not None, args.values()))] * 2,
-        )
-        return cursor.fetchone()[0]
+    return fetchone(
+        full_query,
+        *([query, *list(filter(lambda x: x is not None, args.values()))] * 2),
+    )[0]
 
 
 def course_search_by_similarity_departments(
@@ -285,10 +243,7 @@ def course_search_by_similarity_departments(
         GROUP BY department
     """
 
-    with connection.cursor() as cursor:
-        cursor.execute(
-            full_query,
-            [query, *list(filter(lambda x: x is not None, args.values()))] * 2,
-        )
-        columns = [col[0] for col in cursor.description]
-        return [dict(zip(columns, row)) for row in cursor.fetchall()]
+    return fetchall(
+        full_query,
+        *([query, *list(filter(lambda x: x is not None, args.values()))] * 2),
+    )

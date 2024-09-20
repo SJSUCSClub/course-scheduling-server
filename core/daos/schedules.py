@@ -1,5 +1,4 @@
-from django.db import connection
-from core.daos.utils import to_where
+from core.daos.utils import to_where, fetchone, fetchall
 
 
 def schedule_select(
@@ -32,10 +31,7 @@ def schedule_select(
     if page and limit:
         query += f" LIMIT {limit} OFFSET {(page - 1 ) * limit}"
 
-    with connection.cursor() as cursor:
-        cursor.execute(query, list(filter(lambda x: x is not None, args.values())))
-        columns = [col[0] for col in cursor.description]
-        return [dict(zip(columns, el)) for el in cursor.fetchall()]
+    return fetchall(query, *list(filter(lambda x: x is not None, args.values())))
 
 
 def schedule_select_counts(
@@ -59,6 +55,4 @@ def schedule_select_counts(
     args = locals()
     query = "SELECT COUNT(*) FROM schedules" + to_where(**args)
 
-    with connection.cursor() as cursor:
-        cursor.execute(query, list(filter(lambda x: x is not None, args.values())))
-        return cursor.fetchone()[0]
+    return fetchone(query, *list(filter(lambda x: x is not None, args.values())))[0]

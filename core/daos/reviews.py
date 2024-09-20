@@ -1,5 +1,5 @@
 from django.db import connection
-from core.daos.utils import to_where
+from core.daos.utils import to_where, fetchall, fetchone
 from typing import List, Dict, Union, Literal
 
 
@@ -39,10 +39,7 @@ def reviews_select(
     if page and limit:
         query += f" LIMIT {limit} OFFSET {(page - 1 ) * limit}"
 
-    with connection.cursor() as cursor:
-        cursor.execute(query, list(filter(lambda x: x is not None, args.values())))
-        columns = [col[0] for col in cursor.description]
-        return [dict(zip(columns, row)) for row in cursor.fetchall()]
+    return fetchall(query, *list(filter(lambda x: x is not None, args.values())))
 
 
 def reviews_select_count(
@@ -53,9 +50,7 @@ def reviews_select_count(
 ):
     args = locals()
     query = """SELECT COUNT(*) FROM reviews""" + to_where(**args)
-    with connection.cursor() as cursor:
-        cursor.execute(query, list(filter(lambda x: x is not None, args.values())))
-        return cursor.fetchone()[0]
+    return fetchone(query, *list(filter(lambda x: x is not None, args.values())))[0]
 
 
 def review_select_upvotes(review_id):
@@ -96,9 +91,4 @@ def review_select_tags(
     query = f"""
         SELECT unnest AS tag, COUNT(unnest) AS count FROM ({inner_query}) GROUP BY unnest;
     """
-
-    with connection.cursor() as cursor:
-        cursor.execute(query, list(kwargs.values()))
-        columns = [col[0] for col in cursor.description]
-        ret = [dict(zip(columns, el)) for el in cursor.fetchall()]
-    return ret
+    return fetchall(query, *list(filter(lambda x: x is not None, kwargs.values())))

@@ -1,4 +1,5 @@
 from typing import Union, Literal
+from django.db import connection
 
 
 def to_where(join: Union[Literal["AND"], Literal["OR"]] = "AND", **kwargs):
@@ -14,3 +15,23 @@ def to_where(join: Union[Literal["AND"], Literal["OR"]] = "AND", **kwargs):
                     ret += f" {k} = %s {join} "
         ret = ret.removesuffix(f" {join} ")
     return ret
+
+
+def fetchall(query: str, *args):
+    with connection.cursor() as cursor:
+        cursor.execute(query, args)
+        columns = [col[0] for col in cursor.description]
+        return [dict(zip(columns, row)) for row in cursor.fetchall()]
+
+
+def fetchone(query: str, *args):
+    with connection.cursor() as cursor:
+        cursor.execute(query, args)
+        return cursor.fetchone()
+
+
+def fetchone_as_dict(query: str, *args):
+    with connection.cursor() as cursor:
+        cursor.execute(query, args)
+        columns = [col[0] for col in cursor.description]
+        return dict(zip(columns, cursor.fetchone()))
