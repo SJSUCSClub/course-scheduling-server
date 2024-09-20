@@ -1,20 +1,61 @@
 from django.db import connection
+from core.daos.utils import to_where
+from typing import List, Dict, Union, Literal
 
 
-def reviews_select_paginated_by_course(dept, course_number, limit, page, tags=[]):
+def reviews_select(
+    department: str = None,
+    course_number: str = None,
+    professor_id: str = None,
+    tags: List[str] = [],
+    limit: int = None,
+    page: int = None,
+):
+    """
+    Select reviews from the database with any of the given filters
+
+    Args:
+        department: string - the department of the course
+        course_number: string - the number of the course
+        professor_id: string - the id of the professor
+        tags: List[str] - the tags of the review
+        limit: int - the number of results to return per page; only effective if page is also provided
+        page: int - the 1-indexed page number; only effective if limit is also provided
+
+    Returns:
+        out: List[dict] - A list of reviews
+    """
+    args = locals()
+    page = args.pop("page")
+    limit = args.pop("limit")
+    query = """
+        SELECT r.*, u.name AS reviewer_name, u.username AS reviewer_username, p.id AS professor_id, p.name AS professor_name, p.email AS professor_email
+        FROM reviews r
+        LEFT JOIN users u ON r.user_id = u.id
+        INNER JOIN users p ON r.professor_id = p.id
+    """
+    query += to_where(**args)
+
+    if page and limit:
+        query += f" LIMIT {limit} OFFSET {(page - 1 ) * limit}"
+
     with connection.cursor() as cursor:
-        query = """
-            select r.*, u.name as reviewer_name, u.username as reviewer_username, p.id as professor_id, p.name as professor_name, p.email as professor_email
-            from reviews r
-            left join users u on r.user_id = u.id
-            inner join users p on r.user_id = p.id
-            where r.department=%s and course_num=%s and r.tags @> %s::tag_enum[]
-            limit %s
-            offset %s;
-        """
-        cursor.execute(query, (dept, course_number, tags, limit, (page - 1) * limit))
+        cursor.execute(query, list(filter(lambda x: x is not None, args.values())))
         columns = [col[0] for col in cursor.description]
         return [dict(zip(columns, row)) for row in cursor.fetchall()]
+
+
+def reviews_select_count(
+    department: str = None,
+    course_number: str = None,
+    professor_id: str = None,
+    tags: List[str] = [],
+):
+    args = locals()
+    query = """SELECT COUNT(*) FROM reviews""" + to_where(**args)
+    with connection.cursor() as cursor:
+        cursor.execute(query, list(filter(lambda x: x is not None, args.values())))
+        return cursor.fetchone()[0]
 
 
 def review_select_upvotes(review_id):
@@ -22,10 +63,10 @@ def review_select_upvotes(review_id):
 
     with connection.cursor() as cursor:
         query = """
-            select upvote, count(*)
-            from user_review_critique
-            where review_id=%s
-            group by upvote;
+            SELECT upvote, COUNT(*)
+            FROM user_review_critique
+            WHERE review_id=%s
+            GROUP BY upvote;
         """
         cursor.execute(query, (review_id,))
         print(cursor.fetchall())
@@ -35,3 +76,29 @@ def review_select_upvotes(review_id):
 
 def review_select_comments(review_id):
     pass
+
+
+def review_select_tags(
+    **kwargs,
+) -> List[Dict[Union[Literal["tag"], Literal["count"]], Union[str, int]]]:
+    """
+    Select the tags from the database with any of the given filters
+
+    Args:
+        department: string - the department of the course
+        course_number: string - the number of the course
+        professor_id: string - the id of the professor
+
+    Returns:
+        tags: List[dict] - A list of tags in the form {"tag": str, "count": int}
+    """
+    inner_query = "SELECT unnest(tags) FROM reviews" + to_where(**kwargs)
+    query = f"""
+        SELECT unnest AS tag, COUNT(unnest) AS count FROM ({inner_query}) GROUP BY unnest;
+    """
+
+    with connection.cursor() as cursor:
+        cursor.execute(query, list(kwargs.values()))
+        columns = [col[0] for col in cursor.description]
+        ret = [dict(zip(columns, el)) for el in cursor.fetchall()]
+    return ret

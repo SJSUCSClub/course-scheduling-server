@@ -8,11 +8,15 @@ urlpatterns = [
     # path("courses/search/", views.course_search),
     # path("courses/<str:course>/", views.sql_courses),
     # path('courses/<str:course>/reviews/', views.sql_reviews),
-    # path('courses/<str:course>/review-stats/', views.review_stats),
+    # path('courses/<str:course>/reviews-stats/', views.review_stats),
     # path('courses/<str:course>/summary/', views.course_summary_controller),
     path(
         "courses/<str:department>/<str:course_number>/summary/",
         views.courses.course_summary_view,
+    ),
+    path(
+        "courses/<str:department>/<str:course_number>/reviews-stats/",
+        views.courses.course_reviews_stats_view,
     ),
     path(
         "courses/<str:department>/<str:course_number>/schedules/",
