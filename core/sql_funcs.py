@@ -6,7 +6,7 @@ from django.db import connection
 DEFAULT_LIMIT = 3
 LIMITS = ["3", "10", "20", "50"]
 
-''' A list of key value pairs for each item in a row and its corresponding column name'''
+""" A list of key value pairs for each item in a row and its corresponding column name"""
 
 
 def default(o):
@@ -39,13 +39,13 @@ def run_sql(query, col_tuples=None):
     return data, rows
 
 
-''' For all "Select *" queries '''
+""" For all "Select *" queries """
 
 
-def general_statements(table, resulting_cols=['*'], orderby=False, orderby_col=None):
+def general_statements(table, resulting_cols=["*"], orderby=False, orderby_col=None):
 
-    select_cols = ','.join(resulting_cols)
-    query = f'SELECT {select_cols} FROM {table}'
+    select_cols = ",".join(resulting_cols)
+    query = f"SELECT {select_cols} FROM {table}"
     if orderby and orderby_col is not None:
         query = orderby(query, orderby_col)
 
@@ -53,20 +53,32 @@ def general_statements(table, resulting_cols=['*'], orderby=False, orderby_col=N
 
     return dictionify(data, rows)
 
+
 # Order by specific column
 
 
 def orderby(query, orderby_col):
-    return query + f' ORDER BY {orderby_col}'
+    return query + f" ORDER BY {orderby_col}"
 
 
-'''Where statements'''
+"""Where statements"""
 
 
-def where(table, columns, resulting_cols=['*'], like=False, Or=False, orderby=False, orderby_col=None, page=None, limit=None, tags=None):
-    select_cols = ','.join(resulting_cols)
+def where(
+    table,
+    columns,
+    resulting_cols=["*"],
+    like=False,
+    Or=False,
+    orderby=False,
+    orderby_col=None,
+    page=None,
+    limit=None,
+    tags=None,
+):
+    select_cols = ",".join(resulting_cols)
 
-    query = f'SELECT {select_cols} FROM {table} WHERE'
+    query = f"SELECT {select_cols} FROM {table} WHERE"
     col_list = []
     col_tuple = tuple()
     if like:
@@ -77,19 +89,19 @@ def where(table, columns, resulting_cols=['*'], like=False, Or=False, orderby=Fa
     else:
         for name, val in columns.items():
             col_tuple += (val,)
-            col_list.append(' ' + name + '=%s')
+            col_list.append(" " + name + "=%s")
 
     if tags and len(tags) > 0:
         new_tags = []
         for tag in tags:
             new_tags.append("'" + tag + "'")
-        tag_str = '(array[' + ','.join(new_tags) + '])::tag_enum[]'
+        tag_str = "(array[" + ",".join(new_tags) + "])::tag_enum[]"
         # col_tuple += ('"tags"', )
-        col_list.append(tag_str + '<@tags')
+        col_list.append(tag_str + "<@tags")
     if Or:
-        col_join = ' OR '.join(col_list)
+        col_join = " OR ".join(col_list)
     else:
-        col_join = ' AND '.join(col_list)
+        col_join = " AND ".join(col_list)
 
     query += col_join
 
@@ -100,14 +112,17 @@ def where(table, columns, resulting_cols=['*'], like=False, Or=False, orderby=Fa
         if limit is None or str(limit) not in LIMITS:
             limit = DEFAULT_LIMIT
         query += " LIMIT %s OFFSET %s"
-        col_tuple += (limit, (int(page) - 1)*int(limit), )
+        col_tuple += (
+            limit,
+            (int(page) - 1) * int(limit),
+        )
 
     data, rows = run_sql(query, col_tuple)
 
     return dictionify(data, rows)
 
 
-''' merge rows from different tables and return json object'''
+""" merge rows from different tables and return json object"""
 
 
 def row_merge(objs):

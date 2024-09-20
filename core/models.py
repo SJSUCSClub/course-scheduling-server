@@ -8,19 +8,19 @@
 from django.db import models
 from django.core.validators import MaxValueValidator, MinValueValidator
 
-A_plus = 'A+'
-A_grade = 'A'
-A_min = 'A-'
-B_plus = 'B+'
-B_grade = 'B'
-B_min = 'B-'
-C_plus = 'C+'
-C_grade = 'C'
-C_min = 'C-'
-D_plus = 'D+'
-D_grade = 'D'
-D_min = 'D-'
-Fail = 'F'
+A_plus = "A+"
+A_grade = "A"
+A_min = "A-"
+B_plus = "B+"
+B_grade = "B"
+B_min = "B-"
+C_plus = "C+"
+C_grade = "C"
+C_min = "C-"
+D_plus = "D+"
+D_grade = "D"
+D_min = "D-"
+Fail = "F"
 
 GRADE_ENUMS = [
     (A_plus, "A+"),
@@ -55,7 +55,7 @@ class Users(models.Model):
 
     class Meta:
         managed = False
-        db_table = 'users'
+        db_table = "users"
 
 
 class Departments(models.Model):
@@ -65,7 +65,7 @@ class Departments(models.Model):
 
     class Meta:
         managed = False
-        db_table = 'departments'
+        db_table = "departments"
 
 
 class Courses(models.Model):
@@ -78,49 +78,53 @@ class Courses(models.Model):
     units = models.TextField(blank=True, null=True)
     satisfies_area = models.TextField(blank=True, null=True)
     department = models.ForeignKey(
-        Departments, models.DO_NOTHING, db_column='department')
+        Departments, models.DO_NOTHING, db_column="department"
+    )
 
     class Meta:
         managed = False
-        db_table = 'courses'
-        unique_together = (('course_number', 'department'),)
+        db_table = "courses"
+        unique_together = (("course_number", "department"),)
 
 
 class Reviews(models.Model):
     id = models.BigAutoField(primary_key=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    user = models.ForeignKey(
-        Users, models.CASCADE, related_name='reviews_user_id')
+    user = models.ForeignKey(Users, models.CASCADE, related_name="reviews_user_id")
     professor = models.ForeignKey(
-        Users, models.DO_NOTHING, related_name='reviews_professor_id')
+        Users, models.DO_NOTHING, related_name="reviews_professor_id"
+    )
     course_number = models.ForeignKey(
-        Courses, models.DO_NOTHING, db_column='course_number')
+        Courses, models.DO_NOTHING, db_column="course_number"
+    )
     department = models.ForeignKey(
-        Departments, models.DO_NOTHING, db_column='department')
+        Departments, models.DO_NOTHING, db_column="department"
+    )
     content = models.TextField()
     quality = models.IntegerField(
-        default=3, validators=[MinValueValidator(1), MaxValueValidator(5)])
+        default=3, validators=[MinValueValidator(1), MaxValueValidator(5)]
+    )
     difficulty = models.IntegerField(
-        default=3, validators=[MinValueValidator(1), MaxValueValidator(5)])
+        default=3, validators=[MinValueValidator(1), MaxValueValidator(5)]
+    )
     # This field type is a guess.
-    grade = models.TextField(max_length=2, blank=True,
-                             null=True, choices=GRADE_ENUMS)
+    grade = models.TextField(max_length=2, blank=True, null=True, choices=GRADE_ENUMS)
     # This field type is a guess.
     tags = models.TextField(blank=True, null=True, choices=TAG_ENUMS)
     take_again = models.BooleanField()
-    is_user_anonymous = models.BooleanField(
-        default=False, blank=True, null=True)
+    is_user_anonymous = models.BooleanField(default=False, blank=True, null=True)
 
     class Meta:
         managed = False
-        db_table = 'reviews'
+        db_table = "reviews"
 
 
 class Schedules(models.Model):
     class_number = models.IntegerField(primary_key=True)
     created_at = models.DateTimeField(auto_now_add=True)
     course_number = models.ForeignKey(
-        Courses, models.DO_NOTHING, db_column='course_number')
+        Courses, models.DO_NOTHING, db_column="course_number"
+    )
     section = models.TextField()
     days = models.TextField()
     dates = models.TextField()
@@ -132,29 +136,36 @@ class Schedules(models.Model):
     location = models.TextField(blank=True, null=True)
     mode_of_instruction = models.TextField()
     satisfies_area = models.TextField(blank=True, null=True)
-    professor = models.ForeignKey(
-        Users, models.DO_NOTHING, blank=True, null=True)
+    professor = models.ForeignKey(Users, models.DO_NOTHING, blank=True, null=True)
     department = models.ForeignKey(
-        Departments, models.DO_NOTHING, db_column='department')
+        Departments, models.DO_NOTHING, db_column="department"
+    )
 
     class Meta:
         managed = False
-        db_table = 'schedules'
+        db_table = "schedules"
 
 
 class ProfessorCourse(models.Model):
     # The composite primary key (professor_id, course_number, department) found, that is not supported. The first column is selected.
-    professor = models.OneToOneField(
-        Users, models.DO_NOTHING)
+    professor = models.OneToOneField(Users, models.DO_NOTHING)
     course_number = models.ForeignKey(
-        Courses, models.DO_NOTHING, related_name='professor_course_number', db_column='course_number')
+        Courses,
+        models.DO_NOTHING,
+        related_name="professor_course_number",
+        db_column="course_number",
+    )
     department = models.ForeignKey(
-        Courses, models.DO_NOTHING, related_name='professor_course_department', db_column='department')
+        Courses,
+        models.DO_NOTHING,
+        related_name="professor_course_department",
+        db_column="department",
+    )
 
     class Meta:
         managed = False
-        db_table = 'professor_course'
-        unique_together = (('professor', 'course_number', 'department'),)
+        db_table = "professor_course"
+        unique_together = (("professor", "course_number", "department"),)
 
 
 class Comments(models.Model):
@@ -167,7 +178,7 @@ class Comments(models.Model):
 
     class Meta:
         managed = False
-        db_table = 'comments'
+        db_table = "comments"
 
 
 class FlagReviews(models.Model):
@@ -179,20 +190,21 @@ class FlagReviews(models.Model):
 
     class Meta:
         managed = False
-        db_table = 'flag_reviews'
+        db_table = "flag_reviews"
 
 
 class UserReviewCritique(models.Model):
     # The composite primary key (user_id, review_id) found, that is not supported. The first column is selected.
     user = models.OneToOneField(Users, models.CASCADE)
     review = models.ForeignKey(
-        Reviews, models.CASCADE, related_name='review_id_critique')
+        Reviews, models.CASCADE, related_name="review_id_critique"
+    )
     upvote = models.BooleanField()
 
     class Meta:
         managed = False
-        db_table = 'user_review_critique'
-        unique_together = (('user', 'review'),)
+        db_table = "user_review_critique"
+        unique_together = (("user", "review"),)
 
 
 class Majors(models.Model):
@@ -201,22 +213,23 @@ class Majors(models.Model):
 
     class Meta:
         managed = False
-        db_table = 'majors'
+        db_table = "majors"
 
 
 class MajorRequirements(models.Model):
     # The composite primary key (id, major_name, department, course_number) found, that is not supported. The first column is selected.
     id = models.BigAutoField(primary_key=True)
     created_at = models.DateTimeField()
-    major_name = models.ForeignKey(
-        'Majors', models.DO_NOTHING, db_column='major_name')
-    department = models.ForeignKey(
-        Courses, models.DO_NOTHING, db_column='department')
+    major_name = models.ForeignKey("Majors", models.DO_NOTHING, db_column="major_name")
+    department = models.ForeignKey(Courses, models.DO_NOTHING, db_column="department")
     course_number = models.ForeignKey(
-        Courses, models.DO_NOTHING, related_name='major_requirements_course_number', db_column='course_number')
+        Courses,
+        models.DO_NOTHING,
+        related_name="major_requirements_course_number",
+        db_column="course_number",
+    )
 
     class Meta:
         managed = False
-        db_table = 'major_requirements'
-        unique_together = (
-            ('id', 'major_name', 'department', 'course_number'),)
+        db_table = "major_requirements"
+        unique_together = (("id", "major_name", "department", "course_number"),)
