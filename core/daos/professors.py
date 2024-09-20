@@ -1,6 +1,15 @@
 from django.db import connection
 
 
+# SUMMARY
+def professor_select_summary(professor_id):
+    with connection.cursor() as cursor:
+        query = "SELECT id, name, email FROM users WHERE id = %s"
+        cursor.execute(query, (professor_id,))
+        columns = [col[0] for col in cursor.description]
+        return dict(zip(columns, cursor.fetchone()))
+
+
 # STATS
 def professor_select_average_grade(professor_id):
     with connection.cursor() as cursor:
