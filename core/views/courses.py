@@ -59,6 +59,8 @@ def course_search_view(request):
         **validate_page_limit(request),
         query=request.GET.get("query", None),
         department=request.GET.get("department", None),
+        units=request.GET.get("units", None),
+        satisfies_area=request.GET.get("satisfies_area", None),
     )
 
     return JsonResponse(json_data)

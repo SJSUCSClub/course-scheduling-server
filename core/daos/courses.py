@@ -75,6 +75,8 @@ def course_search_by_filters(
     department: str = None,
     course_number: str = None,
     professor_id: str = None,
+    units: str = None,
+    satisfies_area: str = None,
     limit: int = None,
     page: int = None,
 ):
@@ -85,7 +87,8 @@ def course_search_by_filters(
         department: string - the department of the course
         course_number: string - the number of the course
         professor_id: string - the id of the professor
-        tags: List[str] - the tags of the course
+        units: string - the units of the course
+        satisfies_area: string - the area the course satisfies
         limit: int - the number of results to return per page; only effective if page is also provided
         page: int - the 1-indexed page number; only effective if limit is also provided
 
@@ -107,6 +110,9 @@ def course_search_by_filters_count(
     department: str = None,
     course_number: str = None,
     professor_id: str = None,
+    units: str = None,
+    satisfies_area: str = None,
+    count_by: str = None,
 ) -> int:
     """
     Returns the number of courses that match the given filters
@@ -115,27 +121,26 @@ def course_search_by_filters_count(
         department: string - the department of the course
         course_number: string - the number of the course
         professor_id: string - the id of the professor
-        tags: List[str] - the tags of the course
+        units: string - the units of the course
+        satisfies_area: string - the area the course satisfies
+        count_by: string - the column to count by, or None to count all
 
     Returns:
         out: int - The total number of courses matching the given filters
     """
     args = locals()
-    query = "SELECT COUNT(*) FROM courses" + to_where(**args)
-    return fetchone(query, *list(filter(lambda x: x is not None, args.values())))[0]
-
-
-def course_search_by_filters_departments(
-    department: str = None,
-    course_number: str = None,
-    professor_id: str = None,
-):
-    args = locals()
-    query = (
-        "SELECT department, COUNT(*) as count FROM (SELECT * FROM COURSES"
-        + to_where(**args)
-        + ") GROUP BY department"
-    )
+    count_by = args.pop("count_by")
+    count_query = "COUNT(*) as count"
+    group_by = ""
+    not_null_clause = ""
+    if count_by is not None:
+        count_query = f"{count_by}, COUNT(*) as count"
+        group_by = f"GROUP BY {count_by}"
+        if not all(lambda x: x is None, args.values()):
+            not_null_clause = f" AND {count_by} IS NOT NULL"
+        else:
+            not_null_clause = f" WHERE {count_by} IS NOT NULL"
+    query = f"SELECT {count_query} FROM courses {to_where(**args)} {not_null_clause} {group_by}"
     return fetchall(query, *list(filter(lambda x: x is not None, args.values())))
 
 
@@ -144,6 +149,8 @@ def course_search_by_similarity(
     department: str = None,
     course_number: str = None,
     professor_id: str = None,
+    units: str = None,
+    satisfies_area: str = None,
     limit: int = None,
     page: int = None,
 ):
@@ -186,6 +193,9 @@ def course_search_by_similarity_count(
     department: str = None,
     course_number: str = None,
     professor_id: str = None,
+    units: str = None,
+    satisfies_area: str = None,
+    count_by: str = None,
 ):
     """
     Search for courses by similarity to the given query,
@@ -193,6 +203,7 @@ def course_search_by_similarity_count(
     """
     args = locals()
     query = args.pop("query")
+    count_by = args.pop("count_by")
     sql_query1 = (
         "SELECT *, similarity((department || ' ' || course_number), %s) AS similarity FROM courses"
         + to_where(**args)
@@ -201,46 +212,20 @@ def course_search_by_similarity_count(
         **args
     )
     fields = ", ".join([field.name for field in Courses._meta.fields])
+    count_query = "COUNT(*)"
+    group_by = ""
+    not_null_clause = ""
+    if count_by is not None:
+        count_query = f"{count_by}, COUNT(*) as count"
+        group_by = f"GROUP BY {count_by}"
+        not_null_clause = f" AND {count_by} IS NOT NULL"
     full_query = f"""
-        SELECT COUNT(*) FROM
+        SELECT {count_query} FROM
         (SELECT {fields} FROM 
         ({sql_query1} UNION {sql_query2})
-        WHERE similarity > 0.4
+        WHERE similarity > 0.4 {not_null_clause}
         GROUP BY {fields})
-    """
-
-    return fetchone(
-        full_query,
-        *([query, *list(filter(lambda x: x is not None, args.values()))] * 2),
-    )[0]
-
-
-def course_search_by_similarity_departments(
-    query: str,
-    department: str = None,
-    course_number: str = None,
-    professor_id: str = None,
-):
-    """
-    Search for courses by similarity to the given query,
-    applying all the given filters
-    """
-    args = locals()
-    query = args.pop("query")
-    sql_query1 = (
-        "SELECT *, similarity((department || ' ' || course_number), %s) AS similarity FROM courses"
-        + to_where(**args)
-    )
-    sql_query2 = "SELECT *, similarity(name, %s) AS similarity FROM courses" + to_where(
-        **args
-    )
-    fields = ", ".join([field.name for field in Courses._meta.fields])
-    full_query = f"""
-        SELECT department, COUNT(*) as count FROM
-        (SELECT {fields} FROM 
-        ({sql_query1} UNION {sql_query2})
-        WHERE similarity > 0.4)
-        GROUP BY department
+        {group_by}
     """
 
     return fetchall(
