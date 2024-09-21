@@ -3,6 +3,10 @@ from core.daos.utils import to_where, fetchall, fetchone
 from typing import List, Dict, Union, Literal
 
 
+def process_tags(tags: str) -> List[str]:
+    return [tag.strip('"{} ') for tag in tags.split(",")]
+
+
 def reviews_select(
     department: str = None,
     course_number: str = None,
@@ -39,7 +43,10 @@ def reviews_select(
     if page and limit:
         query += f" LIMIT {limit} OFFSET {(page - 1 ) * limit}"
 
-    return fetchall(query, *list(filter(lambda x: x is not None, args.values())))
+    ret = fetchall(query, *list(filter(lambda x: x is not None, args.values())))
+    for el in ret:
+        el["tags"] = process_tags(el["tags"])
+    return ret
 
 
 def reviews_select_count(

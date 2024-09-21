@@ -26,7 +26,10 @@ def schedule_select(
     args = locals()
     page = args.pop("page")
     limit = args.pop("limit")
-    query = "SELECT * FROM schedules" + to_where(**args)
+    query = (
+        "SELECT s.*, u.name AS professor_name FROM schedules s LEFT JOIN users u ON s.professor_id = u.id"
+        + to_where(**args, table_name="s")
+    )
 
     if page and limit:
         query += f" LIMIT {limit} OFFSET {(page - 1 ) * limit}"
