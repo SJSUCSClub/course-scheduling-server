@@ -24,5 +24,5 @@ ENV ALLOWED_HOSTS=0.0.0.0
 # expose port
 EXPOSE 8000
 
-# run command
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+# run bash script
+CMD ["./script.sh"]
