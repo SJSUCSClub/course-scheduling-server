@@ -11,3 +11,4 @@ venv/
 
 # secrets
 client_secret.json
+createdb.sql
