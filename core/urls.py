@@ -33,5 +33,5 @@ urlpatterns = [
     path("professors/<str:professor_id>/reviews/", views.professor_reviews_view),
     path("professors/search/", views.professor_search_view),
     #     ############## schedule search ####################
-    #     path('schedules/search/', views.schedule_search)
+    path("schedules/search/", views.schedule_search_view),
 ]

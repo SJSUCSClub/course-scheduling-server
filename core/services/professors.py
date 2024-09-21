@@ -14,6 +14,7 @@ from core.daos import (
     professor_search_count,
     professor_search_by_similarity,
     professor_search_by_similarity_count,
+    professor_search_by_similarity_tags,
 )
 
 
@@ -37,12 +38,15 @@ def get_professor_search_results(page: int, limit: int, query: str = None):
     if query:
         items = professor_search_by_similarity(query, page=page, limit=limit)
         total_results = professor_search_by_similarity_count(query)
+        tags = professor_search_by_similarity_tags(query)
     else:
         items = professor_search(page=page, limit=limit)
         total_results = professor_search_count()
+        tags = review_select_tags()
     return {
         "items": items,
         "total_results": total_results,
         "page": page,
         "pages": total_results // limit + (1 if total_results % limit > 0 else 0),
+        "filters": {"tags": tags},
     }
