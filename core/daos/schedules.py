@@ -27,7 +27,10 @@ def schedule_select(
     page = args.pop("page")
     limit = args.pop("limit")
     query = (
-        "SELECT s.*, u.name AS professor_name FROM schedules s LEFT JOIN users u ON s.professor_id = u.id"
+        "SELECT s.*, u.name AS professor_name, c.name AS course_title "
+        + "FROM schedules s "
+        + "LEFT JOIN users u ON s.professor_id = u.id "
+        + "LEFT JOIN courses c ON s.course_number = c.course_number AND s.department = c.department "
         + to_where(**args, table_name="s")
     )
 
