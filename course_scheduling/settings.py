@@ -39,6 +39,7 @@ def get_env_list(env_name:str):
         return tmp.split(",")
     return tmp
 
+APPEND_SLASH = False
 
 ALLOWED_HOSTS = get_env_list("ALLOWED_HOSTS") or ["*"]
 

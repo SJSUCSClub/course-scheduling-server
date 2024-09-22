@@ -13,6 +13,7 @@ COPY course_scheduling/ course_scheduling/
 COPY manage.py manage.py
 COPY client_secret.json client_secret.json
 COPY script.sh script.sh
+RUN chmod +x script.sh
 
 # set environment variables
 # (these get re-set by the compose, but they're here for reference)
