@@ -13,8 +13,6 @@ from core.daos import (
     course_search_by_filters_count,
     course_search_by_similarity,
     course_search_by_similarity_count,
-    course_search_by_filters_departments,
-    course_search_by_similarity_departments,
 )
 
 
@@ -40,19 +38,34 @@ def get_course_search_results(
     limit: int,
     query: str = None,
     department: str = None,
+    units: str = None,
+    satisfies_area: str = None,
 ):
+    args = locals()
+    page = args.pop("page")
+    limit = args.pop("limit")
+    query = args.pop("query")
+    search_fn = course_search_by_filters
+    count_fn = course_search_by_filters_count
     if query:
-        items = course_search_by_similarity(query, department, page=page, limit=limit)
-        total_results = course_search_by_similarity_count(query, department)
-        departments = course_search_by_similarity_departments(query, department)
-    else:
-        items = course_search_by_filters(department, page=page, limit=limit)
-        total_results = course_search_by_filters_count(department)
-        departments = course_search_by_filters_departments(department)
+        args["query"] = query
+        search_fn = course_search_by_similarity
+        count_fn = course_search_by_similarity_count
+
+    items = search_fn(**args, page=page, limit=limit)
+    total_results = count_fn(**args)[0]["count"]
+    departments = count_fn(**args, count_by="department")
+    units = count_fn(**args, count_by="units")
+    satisfies_area = count_fn(**args, count_by="satisfies_area")
+
     return {
         "items": items,
         "total_results": total_results,
         "page": page,
         "pages": total_results // limit + (1 if total_results % limit > 0 else 0),
-        "filters": {"departments": departments},
+        "filters": {
+            "departments": departments,
+            "units": units,
+            "satisfies_area": satisfies_area,
+        },
     }
