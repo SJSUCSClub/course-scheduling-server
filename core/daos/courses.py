@@ -136,7 +136,7 @@ def course_search_by_filters_count(
     if count_by is not None:
         count_query = f"{count_by}, COUNT(*) as count"
         group_by = f"GROUP BY {count_by}"
-        if not all(lambda x: x is None, args.values()):
+        if not all(x is None for x in args.values()):
             not_null_clause = f" AND {count_by} IS NOT NULL"
         else:
             not_null_clause = f" WHERE {count_by} IS NOT NULL"
