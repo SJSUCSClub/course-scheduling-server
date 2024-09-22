@@ -13,25 +13,25 @@ from .utils import validate_page_limit, try_response
 
 @api_view(["GET"])
 @try_response
-def course_summary_view(request, department, course_number):
-    json_data = course_select_summary(department, course_number)
+def course_summary_view(request, department: str, course_number: str):
+    json_data = course_select_summary(department.upper(), course_number)
 
     return JsonResponse(json_data)
 
 
 @api_view(["GET"])
 @try_response
-def course_reviews_stats_view(request, department, course_number):
-    json_data = get_course_reviews_stats(department, course_number)
+def course_reviews_stats_view(request, department: str, course_number: str):
+    json_data = get_course_reviews_stats(department.upper(), course_number)
 
     return JsonResponse(json_data)
 
 
 @api_view(["GET"])
 @try_response
-def course_schedules_view(request, department, course_number):
+def course_schedules_view(request, department: str, course_number: str):
     json_data = get_paginated_schedules_by_course(
-        department,
+        department.upper(),
         course_number,
         **validate_page_limit(request),
     )
@@ -41,9 +41,9 @@ def course_schedules_view(request, department, course_number):
 
 @api_view(["GET"])
 @try_response
-def course_reviews_view(request, department, course_number):
+def course_reviews_view(request, department: str, course_number: str):
     json_data = get_paginated_reviews_by_course(
-        department,
+        department.upper(),
         course_number,
         **validate_page_limit(request),
         tags=request.GET.getlist("tags"),
