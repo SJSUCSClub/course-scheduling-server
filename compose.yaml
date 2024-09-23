@@ -11,6 +11,7 @@ services:
       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET?REQUIRED}
       - OAUTHLIB_INSECURE_TRANSPORT=1
       - ALLOWED_HOSTS=${ALLOWED_HOSTS?REQUIRED}
+      - FRONTEND_URL=${FRONTEND_URL?REQUIRED}
     depends_on:
       db:
         condition: service_healthy
