@@ -5,6 +5,8 @@ To get started, try out the docker compose. It requires that you have the follow
 - `createdb.sql`
 - `client_secret.json`
 
-Assuming you do, then using the Docker compose is as simple as running `docker compose up`
+Assuming you do, then using the Docker compose is as simple as running `docker compose -f docker-compose.dev.yml up`. This will run the development Docker containers, allowing the Django server to restart whenever you make a change. If you want to run the production Django server, run `docker compose -f docker-compose.prod.yml up`.
+
+To take down the Docker compose, make sure to run `docker compose -f <compose-file> down`.
 
 To expose the backend to https traffic, you can use `ngrok` (or any reverse proxy). Simply run `ngrok http 8000` and you'll be able to access the backend on the url it provides.
