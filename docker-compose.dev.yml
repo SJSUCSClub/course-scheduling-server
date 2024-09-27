@@ -1,7 +1,8 @@
-name: django-postgres
+name: django-postgres-dev
 services:
   backend:
-    build: .
+    build: 
+      dockerfile: Dockerfile.dev
     environment:
       - DB_HOST=db
       - DB_PORT=5432
@@ -18,6 +19,8 @@ services:
       - 8000:8000
     links:
       - db
+    volumes:
+      - .:/app
 
   db:
     image: postgres:16-alpine
