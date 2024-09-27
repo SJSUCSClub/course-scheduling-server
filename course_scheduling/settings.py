@@ -72,6 +72,7 @@ INSTALLED_APPS = [
     "google.oauth2",
     "google_auth_oauthlib",
     "googleapiclient"
+    "drf_yasg",
 ]
 
 MIDDLEWARE = [

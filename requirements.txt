@@ -18,8 +18,11 @@ google-auth-httplib2==0.2.0
 google-auth-oauthlib==1.2.0
 googleapis-common-protos==1.63.2
 httplib2==0.22.0
+drf-yasg==1.21.7
 idna==3.6
+inflection==0.5.1
 oauthlib==3.2.2
+packaging==24.1
 proto-plus==1.24.0
 protobuf==5.27.2
 psycopg2-binary==2.9.9
@@ -30,11 +33,14 @@ PyJWT==2.8.0
 pyparsing==3.1.2
 python-dotenv==1.0.1
 python3-openid==3.2.0
+pytz==2024.2
+PyYAML==6.0.2
 requests==2.31.0
 requests-oauthlib==2.0.0
 rsa==4.9
 six==1.16.0
 soupsieve==2.5
+setuptools==75.1.0
 sqlparse==0.4.4
 typing_extensions==4.12.2
 tzdata==2024.1
