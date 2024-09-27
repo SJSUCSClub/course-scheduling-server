@@ -16,9 +16,27 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from drf_yasg.views import get_schema_view
+from drf_yasg import openapi
+from rest_framework import permissions
+import logging
+logger = logging.getLogger(__name__)
+
+logger.info("Test")
+
+schema_view = get_schema_view(
+    openapi.Info(
+        title="Course Scheduling API",
+        default_version='v1',
+        description="Course Scheduling API for SJSU Course Scheduling Application."
+    ),
+    public=True,
+    permission_classes=(permissions.AllowAny,),
+)
 
 urlpatterns = [
     path('api/auth/', include('authentication.urls')),
     path("core/", include("core.urls")),
     path('admin/', admin.site.urls),
+    path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
 ]
