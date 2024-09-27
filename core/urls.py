@@ -3,6 +3,8 @@ from . import views
 
 urlpatterns = [
     path("api/auth", include("authentication.urls")),
+    ##### HEALTH ENDPOINT ####
+    path("health/", views.health_check, name="health"),
     # path("", views.index, name="index"),
     ##### SEARCH ENDPOINTS ########
     path("courses/search", views.course_search_view),
