@@ -20,5 +20,7 @@ EXPOSE 8000
 
 WORKDIR /app
 
-# run script
-CMD ["/bin/bash", "script.sh"]
+# migrate and then have the development server
+CMD ["sh", "-c", "python manage.py makemigrations \
+    && python manage.py migrate \
+    && python manage.py runserver 0.0.0.0:8000"]

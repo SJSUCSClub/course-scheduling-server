@@ -154,20 +154,20 @@ def schedule_search_by_similarity(
     }
     professor_filters = {"name": professor_name}
     sql_query = f"""
-        SELECT s.*, c.name AS course_title, u.name AS professor_name, similarity(c.name, %s) AS similarity FROM schedules s
+        SELECT s.*, c.name AS course_title, u.name AS professor_name FROM schedules s
         LEFT JOIN courses c ON s.department = c.department AND s.course_number = c.course_number
         LEFT JOIN users u ON s.professor_id = u.id
-        WHERE similarity > 0.4
+        WHERE similarity(c.name, %s) > 0.4
         {to_where(**schedule_filters, prefix=False, table_name="s")}
         {to_where(**professor_filters, prefix=False, table_name="u")}
-        ORDER BY similarity DESC
+        ORDER BY similarity(c.name, %s) DESC
     """
 
     if page and limit:
         sql_query += f" LIMIT {limit} OFFSET {(page - 1 ) * limit}"
 
     return fetchall(
-        sql_query, query, *list(filter(lambda x: x is not None, args.values()))
+        sql_query, query, *list(filter(lambda x: x is not None, args.values())), query
     )
 
 

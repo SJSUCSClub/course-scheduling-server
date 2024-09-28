@@ -5,7 +5,7 @@ To get started, try out the docker compose. It requires that you have the follow
 - `createdb.sql`
 - `client_secret.json`
 
-Assuming you do, then using the Docker compose is as simple as running `docker compose -f docker-compose.dev.yml up`. This will run the development Docker containers, allowing the Django server to restart whenever you make a change. If you want to run the production Django server, run `docker compose -f docker-compose.prod.yml up`.
+Assuming you do, then using the Docker compose is as simple as running `docker compose -f docker-compose.dev.yml up --build`. This will run the development Docker containers, allowing the Django server to restart whenever you make a change. It will also rebuild the docker container if any changes to the Dockerfile or the environment happened. If you want to build and run the production Django server, run `docker compose -f docker-compose.prod.yml up --build`.
 
 To take down the Docker compose, make sure to run `docker compose -f <compose-file> down`.
 
