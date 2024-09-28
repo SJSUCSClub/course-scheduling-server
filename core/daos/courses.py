@@ -1,5 +1,4 @@
 from .utils import to_where, fetchone_as_dict, fetchone, fetchall
-from core.models import Courses
 
 
 def course_select_summary(dept, course_number):
@@ -169,7 +168,17 @@ def course_search_by_similarity(
     sql_query2 = "SELECT *, similarity(name, %s) AS similarity FROM courses" + to_where(
         **args
     )
-    fields = ", ".join([field.name for field in Courses._meta.fields])
+    fields = ",".join(
+        [
+            "course_number",
+            "name",
+            "description",
+            "prereqs",
+            "units",
+            "satisfies_area",
+            "department",
+        ]
+    )
     # TODO - make similarity threshold configurable
     full_query = f"""
         SELECT {fields} FROM 
@@ -211,7 +220,17 @@ def course_search_by_similarity_count(
     sql_query2 = "SELECT *, similarity(name, %s) AS similarity FROM courses" + to_where(
         **args
     )
-    fields = ", ".join([field.name for field in Courses._meta.fields])
+    fields = ",".join(
+        [
+            "course_number",
+            "name",
+            "description",
+            "prereqs",
+            "units",
+            "satisfies_area",
+            "department",
+        ]
+    )
     count_query = "COUNT(*)"
     group_by = ""
     not_null_clause = ""
