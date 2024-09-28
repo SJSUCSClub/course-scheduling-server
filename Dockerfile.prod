@@ -2,9 +2,11 @@ FROM python:3.12
 
 WORKDIR /app
 
-# install dependencies
+# install dependencies and cleanup requirements.txt
 COPY requirements.txt requirements.txt
-RUN pip install -r requirements.txt
+RUN pip install -r requirements.txt \
+    && pip install gunicorn \
+    && rm requirements.txt
 
 # copy project files
 COPY authentication/ authentication/
@@ -12,8 +14,6 @@ COPY core/ core/
 COPY course_scheduling/ course_scheduling/
 COPY manage.py manage.py
 COPY client_secret.json client_secret.json
-COPY script.sh script.sh
-RUN chmod +x script.sh
 
 # set environment variables
 # (these get re-set by the compose, but they're here for reference)
@@ -26,5 +26,8 @@ ENV ALLOWED_HOSTS=0.0.0.0
 # expose port
 EXPOSE 8000
 
-# run script
-CMD ["/bin/bash", "script.sh"]
+# migrate and then have the server run with exactly
+# the number of cores available
+CMD ["sh", "-c", "python manage.py makemigrations \
+    && python manage.py migrate \
+    && gunicorn course_scheduling.wsgi -b 0.0.0.0:8000 -w $(nproc)"]
