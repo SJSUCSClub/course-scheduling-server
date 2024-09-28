@@ -157,7 +157,7 @@ def schedule_search_by_similarity(
         SELECT s.*, c.name AS course_title, u.name AS professor_name FROM schedules s
         LEFT JOIN courses c ON s.department = c.department AND s.course_number = c.course_number
         LEFT JOIN users u ON s.professor_id = u.id
-        WHERE similarity(c.name, %s) > 0.4
+        WHERE similarity(c.name, %s) > 0.2
         {to_where(**schedule_filters, prefix=False, table_name="s")}
         {to_where(**professor_filters, prefix=False, table_name="u")}
         ORDER BY similarity(c.name, %s) DESC
@@ -220,7 +220,7 @@ def schedule_search_by_similarity_count(
         SELECT {count_query} FROM schedules s
         LEFT JOIN courses c ON s.department = c.department AND s.course_number = c.course_number
         LEFT JOIN users u ON s.professor_id = u.id
-        WHERE similarity(c.name, %s) > 0.4
+        WHERE similarity(c.name, %s) > 0.2
         {to_where(**schedule_filters, prefix=False, table_name="s")}
         {to_where(**professor_filters, prefix=False, table_name="u")}
         {group_by}
