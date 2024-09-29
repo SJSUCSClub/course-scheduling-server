@@ -1,8 +1,8 @@
 from rest_framework.decorators import api_view, permission_classes
 from authentication.permissions import AuthenticatedPermission
 from django.http import JsonResponse
-from core.daos.utils import insert, delete, update
-from .utils import try_response, validate_body, validate_user
+from core.daos.utils import insert, delete, update, get
+from .utils import try_response, validate_body, validate_user, format_tags
 from datetime import datetime
 
 
@@ -50,8 +50,36 @@ def user_profile(request):
 def post_review(request):
     user_id = validate_user(request)
     data = validate_body(request)
-    insert(**data, user_id=user_id)
-    return JsonResponse({})
+
+    existing_review = get(
+        "reviews", 
+        {
+            "user_id":user_id, 
+            "professor_id":data["professor_id"], 
+            "course_number":data["course_number"]
+            }
+        )
+    if existing_review:
+        return JsonResponse({"message": "You have already posted a review for this course."}, status=400)
+
+    results = insert(
+        "reviews",
+        {
+            "user_id": user_id,
+            "professor_id": data["professor_id"],
+            "course_number": data["course_number"],
+            "department": data["department"],
+            "content": data["content"],
+            "quality": data["quality"],
+            "ease": data["ease"],
+            "grade": data["grade"],
+            "take_again": data["take_again"],
+            "tags": format_tags(data["tags"]),
+            "is_user_anonymous": data["is_user_anonymous"]
+        }
+    )
+    return JsonResponse(results, safe=False)
+
 
 
 def put_review(request, review_id):
@@ -65,7 +93,7 @@ def put_review(request, review_id):
             "ease": data["ease"],
             "grade": data["grade"],
             "take_again": data["take_again"],
-            "tags": data["tags"],
+            "tags": format_tags(data["tags"]),
             "is_user_anonymous": data["is_user_anonymous"],
         },
         {"user_id": user_id, "id": review_id},

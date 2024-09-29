@@ -3,7 +3,7 @@ from django.http import JsonResponse, HttpRequest
 import traceback
 import sys
 import json
-
+import ast
 
 def validate_page_limit(request: HttpRequest):
     page = request.GET.get("page") or DEFAULT_PAGE
@@ -29,3 +29,7 @@ def validate_user(request: HttpRequest) -> str:
 
 def validate_body(request: HttpRequest) -> dict:
     return json.loads(request.body.decode("utf-8"))
+
+def format_tags(tags):
+    tags = tags.replace("[","{").replace("]","}").replace("'","\"")
+    return tags
