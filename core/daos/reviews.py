@@ -1,5 +1,5 @@
 from django.db import connection
-from core.daos.utils import to_where, fetchall, fetchone
+from core.daos.utils import to_where, fetchall, fetchone, get
 from typing import List, Dict, Union, Literal
 
 
@@ -71,14 +71,18 @@ def review_select_upvotes(review_id):
             GROUP BY upvote;
         """
         cursor.execute(query, (review_id,))
-        print(cursor.fetchall())
+        results = cursor.fetchall()
+        for upvote, count in results:
+            if upvote:
+                votes["upvotes"] = count
+            else:
+                votes["downvotes"] = count
 
     return votes
 
 
 def review_select_comments(review_id):
-    # TODO - fill me out
-    pass
+    return get("comments", {"review_id": review_id})
 
 
 def review_select_tags(

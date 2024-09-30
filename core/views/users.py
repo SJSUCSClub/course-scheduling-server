@@ -3,45 +3,27 @@ from authentication.permissions import AuthenticatedPermission
 from django.http import JsonResponse
 from core.daos.utils import insert, delete, update, get
 from .utils import try_response, validate_body, validate_user, format_tags
-from datetime import datetime
-
+from core.services.users import (
+    get_user_profile,
+    get_existing_review,
+    insert_review,
+    update_review,
+    insert_comment,
+    update_comment,
+    insert_flag,
+    update_flag,
+    insert_vote,
+    update_vote
+)
 
 @api_view(["GET"])
 @permission_classes([AuthenticatedPermission])
 @try_response
 def user_profile(request):
-    result = {}
-    user_id = request.user.email[0:-9]
-    reviews = where("reviews", {"user_id": user_id})
-    for i in range(len(reviews)):
-        current_review = reviews[i]
-        comments = where("Comments", {"review_id": current_review["id"]})
-        current_review["comments"] = comments
-        voted = where(
-            "user_review_critique",
-            {"user_id": user_id, "review_id": current_review["id"]},
-            ["user_review_critique"],
-        )
-        current_review["voted"] = voted[0]["vote"] if len(voted) > 0 else None
-
-        votes = calculate_votes(
-            "user_review_critique",
-            {"user_id": user_id, "review_id": current_review["id"]},
-        )[0][0]
-        votes_dict = {}
-        votes_dict["upvotes"] = votes[0]
-        votes_dict["downvotes"] = votes[1]
-        current_review["votes"] = votes_dict
-
-    result["review"] = reviews
-    comments = where("Comments", {"user_id": user_id})
-    result["comments"] = comments
-    flagged = where("flag_reviews", {"user_id": user_id})
-    result["flagged_reviews"] = flagged
-    voted = where("user_review_critique", {"user_id": user_id})
-    result["reviews_voted"] = voted
-
-    return JsonResponse(result, safe=False)
+    json_data = get_user_profile(
+        user_id = validate_user(request)
+    )
+    return JsonResponse(json_data, safe=False)
 
 
 @api_view(["POST"])
@@ -50,54 +32,16 @@ def user_profile(request):
 def post_review(request):
     user_id = validate_user(request)
     data = validate_body(request)
-
-    existing_review = get(
-        "reviews", 
-        {
-            "user_id":user_id, 
-            "professor_id":data["professor_id"], 
-            "course_number":data["course_number"]
-            }
-        )
+    existing_review = get_existing_review(user_id, data)
     if existing_review:
-        return JsonResponse({"message": "You have already posted a review for this course."}, status=400)
-
-    results = insert(
-        "reviews",
-        {
-            "user_id": user_id,
-            "professor_id": data["professor_id"],
-            "course_number": data["course_number"],
-            "department": data["department"],
-            "content": data["content"],
-            "quality": data["quality"],
-            "ease": data["ease"],
-            "grade": data["grade"],
-            "take_again": data["take_again"],
-            "tags": format_tags(data["tags"]),
-            "is_user_anonymous": data["is_user_anonymous"]
-        }
-    )
+        return JsonResponse({"message": "You have already posted a review for this course professor pair."}, status=400)
+    results = insert_review(user_id, data)
     return JsonResponse(results, safe=False)
-
-
 
 def put_review(request, review_id):
     user_id = validate_user(request)
     data = validate_body(request)
-    results = update(
-        "reviews",
-        {
-            "content": data["content"],
-            "quality": data["quality"],
-            "ease": data["ease"],
-            "grade": data["grade"],
-            "take_again": data["take_again"],
-            "tags": format_tags(data["tags"]),
-            "is_user_anonymous": data["is_user_anonymous"],
-        },
-        {"user_id": user_id, "id": review_id},
-    )
+    results = update_review(user_id, review_id, data)
     return JsonResponse(results, safe=False)
 
 
@@ -124,14 +68,7 @@ def review_query(request, review_id):
 def post_comment(request):
     user_id = validate_user(request)
     data = validate_body(request)
-    results = insert(
-        "comments",
-        {
-            "user_id": user_id,
-            "review_id": data["review_id"],
-            "content": data["content"],
-        },
-    )
+    results = insert_comment(user_id,data)
     return JsonResponse(results, safe=False)
 
 
@@ -140,11 +77,7 @@ def put_comment(request):
     comment_id = request.GET.get("comment_id")
     user_id = validate_user(request)
     data = validate_body(request)
-    results = update(
-        "comments",
-        {"content": data["content"], "updated_at": datetime.now()},
-        {"user_id": user_id, "review_id": review_id, "id": comment_id},
-    )
+    results = update_comment(user_id,comment_id,review_id,data)
     return JsonResponse(results, safe=False)
 
 
@@ -174,14 +107,7 @@ def comment_query(request):
 def post_flagged_review(request):
     user_id = validate_user(request)
     data = validate_body(request)
-    results = insert(
-        "flag_reviews",
-        {
-            "user_id": user_id,
-            "review_id": data["review_id"],
-            "reason": data["reason"],
-        },
-    )
+    results = insert_flag(user_id,data)
     return JsonResponse(results, safe=False)
 
 
@@ -190,11 +116,7 @@ def put_flag(request):
     flag_id = request.GET.get("flag_id")
     user_id = validate_user(request)
     data = validate_body(request)
-    results = update(
-        "flag_reviews",
-        {"reason": data["reason"]},
-        {"user_id": user_id, "review_id": review_id, "id": flag_id},
-    )
+    results = update_flag(user_id=user_id, flag_id=flag_id, review_id=review_id, data=data)
     return JsonResponse(results, safe=False)
 
 
@@ -222,13 +144,9 @@ def flagged_query(request):
 @permission_classes([AuthenticatedPermission])
 @try_response
 def post_vote(request):
-    # try:
     user_id = validate_user(request)
     data = validate_body(request)
-    results = insert(
-        "user_review_critique",
-        {"user_id": user_id, "review_id": data["review_id"], "upvote": data["vote"]},
-    )
+    results = insert_vote(user_id,data)
     return JsonResponse(results, safe=False)
 
 
@@ -236,11 +154,7 @@ def put_vote(request):
     review_id = request.GET.get("review_id")
     user_id = validate_user(request)
     data = validate_body(request)
-    results = update(
-        "user_review_critique",
-        {"upvote": data["vote"]},
-        {"user_id": user_id, "review_id": review_id},
-    )
+    results = update_vote(user_id,review_id,data)
     return JsonResponse(results, safe=False)
 
 

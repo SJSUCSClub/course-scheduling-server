@@ -3,7 +3,6 @@ from django.http import JsonResponse, HttpRequest
 import traceback
 import sys
 import json
-import ast
 
 def validate_page_limit(request: HttpRequest):
     page = request.GET.get("page") or DEFAULT_PAGE

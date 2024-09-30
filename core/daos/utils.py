@@ -70,8 +70,6 @@ def insert(table_name: str, data: dict):
 def update(table_name: str, data: dict, where: dict):
     with connection.cursor() as cursor:
         set_clause = ", ".join([f"{key} = %s" for key in data.keys()])
-        print(f"UPDATE {table_name} SET {set_clause} {to_where(**where)}",
-            list(data.values()) + list(where.values()))
         cursor.execute(
             f"UPDATE {table_name} SET {set_clause} {to_where(**where)}",
             list(data.values()) + list(where.values()),
@@ -89,8 +87,5 @@ def delete(table_name: str, where: dict):
         return {"message": f"{rows_changed} row(s) were changed"}
 
 def get(table_name:str, where: dict):
-    with connection.cursor() as cursor:
-        cursor.execute(
-            f"SELECT * FROM {table_name} {to_where(**where)}", list(where.values())
-        )
-        return cursor.fetchone()
+    query = f"SELECT * FROM {table_name} {to_where(**where)}"
+    return fetchall(query, *list(where.values()))
