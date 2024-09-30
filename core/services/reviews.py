@@ -3,6 +3,7 @@ from core.daos.reviews import (
     reviews_select_count,
     review_select_upvotes,
     review_select_tags,
+    review_select_comments
 )
 
 
@@ -20,7 +21,7 @@ def get_paginated_reviews_by_course(
     for review in reviews:
         votes = review_select_upvotes(review["id"])
         review["votes"] = votes
-        review["comments"] = None
+        review["comments"] = review_select_comments(review["id"])
 
     total_results = reviews_select_count(dept, course_number, tags=tags)
     tags = review_select_tags(department=dept, course_number=course_number, tags=tags)

@@ -76,7 +76,7 @@ def professor_search_count():
 
 def professor_search_by_similarity(query: str, page: int = None, limit: int = None):
     # TODO - make similarity threshold configurable
-    sql_query = f"SELECT id, name, email FROM users WHERE is_professor = true AND similarity(name, %s) > 0.4 ORDER BY similarity(name, %s) DESC"
+    sql_query = f"SELECT id, name, email FROM users WHERE is_professor = true AND similarity(name, %s) > 0.2 ORDER BY similarity(name, %s) DESC"
     if page and limit:
         sql_query += f" LIMIT {limit} OFFSET {(page - 1 ) * limit}"
 
@@ -85,7 +85,7 @@ def professor_search_by_similarity(query: str, page: int = None, limit: int = No
 
 def professor_search_by_similarity_count(query: str):
     # TODO - make similarity threshold configurable
-    sql_query = f"SELECT COUNT(*) FROM users WHERE is_professor = true AND similarity(name, %s) > 0.4"
+    sql_query = f"SELECT COUNT(*) FROM users WHERE is_professor = true AND similarity(name, %s) > 0.2"
     return fetchone(sql_query, query)[0]
 
 
@@ -95,7 +95,7 @@ def professor_search_by_similarity_tags(query: str):
         SELECT unnest AS tag, COUNT(*) AS count FROM (
             SELECT unnest(tags) FROM users u
             LEFT JOIN reviews r ON r.professor_id = u.id
-            WHERE u.is_professor = true AND similarity(u.name, %s) > 0.4
+            WHERE u.is_professor = true AND similarity(u.name, %s) > 0.2
         ) GROUP BY unnest
     """
     return fetchall(sql_query, query)

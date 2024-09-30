@@ -183,7 +183,7 @@ def course_search_by_similarity(
     full_query = f"""
         SELECT {fields} FROM 
         ({sql_query1} UNION {sql_query2})
-        WHERE similarity > 0.4
+        WHERE similarity > 0.2
         GROUP BY {fields} 
         ORDER BY MAX(similarity) DESC
     """
@@ -242,7 +242,7 @@ def course_search_by_similarity_count(
         SELECT {count_query} FROM
         (SELECT {fields} FROM 
         ({sql_query1} UNION {sql_query2})
-        WHERE similarity > 0.4 {not_null_clause}
+        WHERE similarity > 0.2 {not_null_clause}
         GROUP BY {fields})
         {group_by}
     """
