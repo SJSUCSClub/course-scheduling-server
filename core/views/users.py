@@ -116,7 +116,7 @@ def put_flag(request):
     flag_id = request.GET.get("flag_id")
     user_id = validate_user(request)
     data = validate_body(request)
-    results = update_flag(user_id=user_id, flag_id=flag_id, review_id=review_id, data=data)
+    results = update_flag(user_id, flag_id, review_id, data)
     return JsonResponse(results, safe=False)
 
 
