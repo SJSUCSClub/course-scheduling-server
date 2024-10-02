@@ -8,7 +8,7 @@ from core.daos.reviews import (
 
 
 def get_paginated_reviews_by_course(
-    dept: str, course_number: str, limit: int, page: int, tags=[]
+    dept: str, course_number: str, limit: int, page: int, tags=[], user_id = None
 ):
     reviews = reviews_select(
         dept,
@@ -16,6 +16,7 @@ def get_paginated_reviews_by_course(
         tags=tags,
         limit=limit,
         page=page,
+        user_id= user_id
     )
 
     for review in reviews:

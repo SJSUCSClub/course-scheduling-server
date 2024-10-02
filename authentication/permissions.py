@@ -40,3 +40,17 @@ class NotAuthenticatedPermission(BasePermission):
         return True
     
 
+class CheckAuthentication(BasePermission):
+
+    def has_permission(self, request, view):
+        access_token = request.COOKIES.get('access_token')
+        print(access_token)
+        response = requests.get(f'https://www.googleapis.com/oauth2/v1/tokeninfo?access_token={access_token}')
+        token_info = response.json()
+        email = token_info.get('email')
+        if not email:
+            request.user = None
+            return True
+        user = User.objects.get(email=email)
+        request.user = user
+        return True

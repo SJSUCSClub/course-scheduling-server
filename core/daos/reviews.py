@@ -14,6 +14,7 @@ def reviews_select(
     tags: List[str] = [],
     limit: int = None,
     page: int = None,
+    user_id: str = None
 ):
     """
     Select reviews from the database with any of the given filters
@@ -32,11 +33,13 @@ def reviews_select(
     args = locals()
     page = args.pop("page")
     limit = args.pop("limit")
+    user_id = args.pop("user_id")
     query = """
-        SELECT r.*, u.name AS reviewer_name, u.username AS reviewer_username, p.id AS professor_id, p.name AS professor_name, p.email AS professor_email
+        SELECT r.*, u.name AS reviewer_name, u.username AS reviewer_username, p.id AS professor_id, p.name AS professor_name, p.email AS professor_email, urc.vote_type AS user_vote
         FROM reviews r
         LEFT JOIN users u ON r.user_id = u.id
         INNER JOIN users p ON r.professor_id = p.id
+        LEFT JOIN user_review_critique urc ON urc.review_id = r.id AND urc.user_id = {user_id}
     """
     query += to_where(**args)
 
@@ -46,6 +49,8 @@ def reviews_select(
     ret = fetchall(query, *list(filter(lambda x: x is not None, args.values())))
     for el in ret:
         el["tags"] = process_tags(el["tags"])
+        el["vote"] = el.get("upvote", None)
+    print(ret)
     return ret
 
 

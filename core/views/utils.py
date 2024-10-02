@@ -23,7 +23,7 @@ def try_response(fn):
 
 
 def validate_user(request: HttpRequest) -> str:
-    return request.user.email.removesuffix("@sjsu.edu")
+    return request.user.email.removesuffix("@sjsu.edu") if request.user else None
 
 
 def validate_body(request: HttpRequest) -> dict:

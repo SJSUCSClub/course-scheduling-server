@@ -2,7 +2,7 @@ from rest_framework.decorators import api_view, permission_classes
 from authentication.permissions import AuthenticatedPermission
 from django.http import JsonResponse
 from core.daos.utils import insert, delete, update, get
-from .utils import try_response, validate_body, validate_user, format_tags
+from .utils import try_response, validate_body, validate_user
 from core.services.users import (
     get_user_profile,
     get_existing_review,
