@@ -27,8 +27,10 @@ def validate_user(request: HttpRequest) -> str:
 
 
 def validate_body(request: HttpRequest) -> dict:
-    return json.loads(request.body.decode("utf-8"))
+    return request.data
 
 def format_tags(tags):
+    # Convert tags list to string
+    tags = str(tags)
     tags = tags.replace("[","{").replace("]","}").replace("'","\"")
     return tags
