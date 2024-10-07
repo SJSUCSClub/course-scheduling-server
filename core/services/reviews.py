@@ -56,7 +56,7 @@ def get_paginated_reviews_by_professor(
     for review in reviews:
         votes = review_select_upvotes(review["id"])
         review["votes"] = votes
-        review["comments"] = None
+        review["comments"] = review_select_comments(review["id"])
         review["user_vote"] = user_voted_review(
             user_id=user_id,
             review_id=review["id"]
