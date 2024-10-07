@@ -53,7 +53,7 @@ def get_paginated_reviews_by_professor(
     for review in reviews:
         votes = review_select_upvotes(review["id"])
         review["votes"] = votes
-        review["comments"] = None
+        review["comments"] = review_select_comments(review["id"])
 
     total_results = reviews_select_count(professor_id=professor_id, tags=tags)
     tags = review_select_tags(professor_id=professor_id, tags=tags)
