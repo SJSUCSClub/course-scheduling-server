@@ -54,6 +54,7 @@ def professor_search_view(request):
     json_data = get_professor_search_results(
         **validate_page_limit(request),
         query=request.GET.get("query", None),
+        startswith=request.GET.get("startswith", None),
     )
 
     return JsonResponse(json_data)
