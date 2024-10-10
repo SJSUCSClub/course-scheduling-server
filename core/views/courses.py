@@ -8,7 +8,7 @@ from core.services import (
     get_course_reviews_stats,
     get_course_search_results,
 )
-from .utils import validate_page_limit, try_response
+from .utils import validate_user, validate_page_limit, try_response
 
 
 @api_view(["GET"])
@@ -47,6 +47,7 @@ def course_reviews_view(request, department: str, course_number: str):
         course_number,
         **validate_page_limit(request),
         tags=request.GET.getlist("tags"),
+        user_id=validate_user(request)
     )
 
     return JsonResponse(json_data)
