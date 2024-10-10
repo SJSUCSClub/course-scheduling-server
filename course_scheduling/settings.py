@@ -32,6 +32,26 @@ SECRET_KEY = "django-insecure-b3e*^d&x89959p%%#ba8_9u3mmb05wjacta9ew0e^u2&0z-47#
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+        },
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": "WARNING",
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["console"],
+            "level": os.getenv("DJANGO_LOG_LEVEL", "INFO"),
+            "propagate": False,
+        },
+    },
+}
 
 def get_env_list(env_name: str):
     tmp = os.getenv(env_name, None)

@@ -12,8 +12,7 @@ from core.services.users import (
     update_comment,
     insert_flag,
     update_flag,
-    insert_vote,
-    update_vote
+    insert_vote
 )
 
 @api_view(["GET"])
@@ -148,30 +147,3 @@ def post_vote(request):
     data = validate_body(request)
     results = insert_vote(user_id,data)
     return JsonResponse(results, safe=False)
-
-
-def put_vote(request):
-    review_id = request.GET.get("review_id")
-    user_id = validate_user(request)
-    data = validate_body(request)
-    results = update_vote(user_id,review_id,data)
-    return JsonResponse(results, safe=False)
-
-
-def delete_vote(request):
-    review_id = request.GET.get("review_id")
-    user_id = validate_user(request)
-    results = delete(
-        "user_review_critique", {"user_id": user_id, "review_id": review_id}
-    )
-    return JsonResponse(results, safe=False)
-
-
-@api_view(["PUT", "DELETE"])
-@permission_classes([AuthenticatedPermission])
-@try_response
-def vote_query(request):
-    if request.method == "PUT":
-        return put_vote(request)
-    elif request.method == "DELETE":
-        return delete_vote(request)

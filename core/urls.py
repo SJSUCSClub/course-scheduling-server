@@ -36,6 +36,8 @@ urlpatterns = [
     path("schedules/search", views.schedule_search_view),
     #     ############## departments paths ####################
     path("departments", views.departments_view),
+    #     ############## reviews paths ####################
+    path("reviews/<str:review_id>/comments", views.review_comments_view),
     #     ############## users paths ####################
     path("users/profile", views.user_profile),
     path("users/reviews", views.post_review),
@@ -43,7 +45,6 @@ urlpatterns = [
     path("users/flagged_reviews", views.post_flagged_review),
     path("users/vote", views.post_vote),
     path("users/reviews/<int:review_id>", views.review_query),
-    path("users/reviews/comments/", views.comment_query),
-    path("users/reviews/flagged_reviews/", views.flagged_query),
-    path("users/reviews/vote/", views.vote_query),
+    path("users/reviews/comments", views.comment_query),
+    path("users/reviews/flagged_reviews", views.flagged_query),
 ]

@@ -43,6 +43,7 @@ def credentials_to_dict(credentials):
 @api_view(["GET"])
 @permission_classes([NotAuthenticatedPermission])
 def GoogleAuthorize(request: HttpRequest):
+    frontend_redirect_uri = request.META.get('HTTP_REFERER')
     flow = google_auth_oauthlib.flow.Flow.from_client_secrets_file(
         CLIENT_SECRETS_FILE, scopes=SCOPES
     )
@@ -55,12 +56,18 @@ def GoogleAuthorize(request: HttpRequest):
     print("state", state, file=sys.stderr)
     print("redirecting to", authorization_url, file=sys.stderr)
     print("redirect_uri", flow.redirect_uri, file=sys.stderr)
-    return redirect(authorization_url)
-
+    # set a cookie saving the frontend_redirect_uri in the redirect response
+    response = redirect(authorization_url)
+    response.set_cookie("frontend_redirect_uri", frontend_redirect_uri)
+    return response
 
 @api_view(["GET"])
 @permission_classes([NotAuthenticatedPermission])
 def oauth2callback(request):
+    # get the frontend_redirect_uri from the cookie
+    frontend_redirect_uri = request.COOKIES.get("frontend_redirect_uri")
+    if not frontend_redirect_uri:
+        frontend_redirect_uri = os.getenv("FRONTEND_URL")
     state = request.session["state"]
     flow = google_auth_oauthlib.flow.Flow.from_client_secrets_file(
         CLIENT_SECRETS_FILE, scopes=SCOPES, state=state
@@ -116,7 +123,7 @@ def oauth2callback(request):
     response.set_cookie("refresh_token", credentials.refresh_token, httponly=True)
     response.set_cookie("user_data", json.dumps(user_data))
     response.set_cookie("token_expiration", expires_in_unix)
-    response["Location"] = os.getenv("FRONTEND_URL")
+    response["Location"] = frontend_redirect_uri
     response.status_code = 302
     return response
 
@@ -125,7 +132,8 @@ def oauth2callback(request):
 @permission_classes([AuthenticatedPermission])
 def Logout(request):
     logout(request)
-    response = redirect(os.getenv("FRONTEND_URL"))
+    frontend_redirect_uri = request.META.get('HTTP_REFERER')
+    response = redirect(frontend_redirect_uri)
     delete_cookies = [
         "refresh_token",
         "access_token",

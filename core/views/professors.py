@@ -8,7 +8,7 @@ from core.services import (
     get_paginated_reviews_by_professor,
     get_professor_search_results,
 )
-from .utils import validate_page_limit, try_response
+from .utils import validate_user, validate_page_limit, try_response
 
 
 @api_view(["GET"])
@@ -43,6 +43,7 @@ def professor_reviews_view(request, professor_id):
         professor_id=professor_id,
         **validate_page_limit(request),
         tags=request.GET.getlist("tags"),
+        user_id = validate_user(request)
     )
 
     return JsonResponse(json_data)
