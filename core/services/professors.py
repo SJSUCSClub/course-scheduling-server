@@ -38,6 +38,7 @@ def get_professor_most_visited():
         "most_visited": [
             get_professor_reviews_stats(el["professor_id"])
             | professor_select_summary(el["professor_id"])
+            | {"visits": el["visits"]}
             for el in most_visited
         ]
     }

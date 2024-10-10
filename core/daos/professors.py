@@ -134,7 +134,7 @@ def professor_select_most_visited(limit: int, start_time: str):
     start_time
     """
     query = f"""
-        SELECT professor_id FROM professor_visits
+        SELECT professor_id, COUNT(*) AS visits FROM professor_visits
         WHERE created_at > %s
         GROUP BY (professor_id) 
         ORDER BY COUNT(*) DESC

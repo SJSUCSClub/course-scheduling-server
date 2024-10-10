@@ -32,6 +32,8 @@ def get_course_most_visited():
     return {
         "most_visited": [
             get_course_reviews_stats(el["department"], el["course_number"])
+            | course_select_summary(el["department"], el["course_number"])
+            | {"visits": el["visits"]}
             for el in most_visited
         ]
     }

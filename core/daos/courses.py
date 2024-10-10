@@ -263,7 +263,7 @@ def course_select_most_visited(limit: int, start_time: str):
     start_time
     """
     query = f"""
-        SELECT course_number, department FROM courses_visits
+        SELECT course_number, department, COUNT(*) AS visits FROM courses_visits
         WHERE created_at > %s
         GROUP BY (course_number, department) 
         ORDER BY COUNT(*) DESC
