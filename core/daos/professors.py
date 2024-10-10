@@ -99,3 +99,26 @@ def professor_search_by_similarity_tags(query: str):
         ) GROUP BY unnest
     """
     return fetchall(sql_query, query)
+
+
+def professor_search_by_last_name(
+    last_name_start: str, page: int = None, limit: int = None
+):
+    sql_query = f"""
+        SELECT id, name, email FROM users
+        WHERE is_professor = true AND
+        name ~ ' {last_name_start}[^\\s]*$' ORDER BY name ASC
+    """
+    if page and limit:
+        sql_query += f" LIMIT {limit} OFFSET {(page - 1 ) * limit}"
+
+    return fetchall(sql_query)
+
+
+def professor_search_by_last_name_count(last_name_start: str):
+    sql_query = f"""
+        SELECT COUNT(*) FROM users
+        WHERE is_professor = true AND
+        name ~ ' {last_name_start}[^\\s]*$'
+    """
+    return fetchone(sql_query)[0]

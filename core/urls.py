@@ -34,6 +34,8 @@ urlpatterns = [
     path("professors/search", views.professor_search_view),
     #     ############## schedule search ####################
     path("schedules/search", views.schedule_search_view),
+    #     ############## departments paths ####################
+    path("departments", views.departments_view),
     #     ############## reviews paths ####################
     path("reviews/<str:review_id>/comments", views.review_comments_view),
     #     ############## users paths ####################
