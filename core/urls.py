@@ -22,6 +22,7 @@ urlpatterns = [
         "courses/<str:department>-<str:course_number>/reviews",
         views.course_reviews_view,
     ),
+    path("courses/most_visited", views.course_most_visited_view),
     #     path('courses/<str:course>/reviews/comments', views.review_comments),
     #     ############### professor paths ###################
     path("professors/<str:professor_id>/summary", views.professor_summary_view),

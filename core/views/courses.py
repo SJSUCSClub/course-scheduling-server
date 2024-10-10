@@ -1,12 +1,13 @@
 from django.http.response import JsonResponse
 from rest_framework.decorators import api_view
 
-from core.daos import course_select_summary
 from core.services import (
     get_paginated_reviews_by_course,
     get_paginated_schedules_by_course,
     get_course_reviews_stats,
     get_course_search_results,
+    get_course_summary,
+    get_course_most_visited,
 )
 from .utils import validate_user, validate_page_limit, try_response
 
@@ -14,7 +15,7 @@ from .utils import validate_user, validate_page_limit, try_response
 @api_view(["GET"])
 @try_response
 def course_summary_view(request, department: str, course_number: str):
-    json_data = course_select_summary(department.upper(), course_number)
+    json_data = get_course_summary(department.upper(), course_number)
 
     return JsonResponse(json_data)
 
@@ -47,7 +48,7 @@ def course_reviews_view(request, department: str, course_number: str):
         course_number,
         **validate_page_limit(request),
         tags=request.GET.getlist("tags"),
-        user_id=validate_user(request)
+        user_id=validate_user(request),
     )
 
     return JsonResponse(json_data)
@@ -65,3 +66,9 @@ def course_search_view(request):
     )
 
     return JsonResponse(json_data)
+
+
+@api_view(["GET"])
+@try_response
+def course_most_visited_view(request):
+    return JsonResponse(get_course_most_visited())

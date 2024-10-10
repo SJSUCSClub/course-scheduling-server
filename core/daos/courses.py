@@ -1,9 +1,13 @@
-from .utils import to_where, fetchone_as_dict, fetchone, fetchall
+from .utils import to_where, fetchone_as_dict, fetchone, fetchall, insert
 
 
 def course_select_summary(dept, course_number):
     query = "SELECT * from courses where department=%s and course_number=%s"
     return fetchone_as_dict(query, dept, course_number)
+
+
+def course_insert_view(dept, course_number):
+    insert("courses_visits", {"course_number": course_number, "department": dept})
 
 
 def course_select_paginated_reviews(dept, course_number, limit, page, tags=[]):
@@ -251,3 +255,19 @@ def course_search_by_similarity_count(
         full_query,
         *([query, *list(filter(lambda x: x is not None, args.values()))] * 2),
     )
+
+
+def course_select_most_visited(limit: int, start_time: str):
+    """
+    Select the most visited courses that were visited after
+    start_time
+    """
+    query = f"""
+        SELECT course_number, department FROM courses_visits
+        WHERE created_at > %s
+        GROUP BY (course_number, department) 
+        ORDER BY COUNT(*) DESC
+        LIMIT %s
+    """
+
+    return fetchall(query, start_time, limit)

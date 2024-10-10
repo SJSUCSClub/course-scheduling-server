@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 from core.daos import (
     course_select_average_rating,
     course_select_average_quality,
@@ -13,7 +14,35 @@ from core.daos import (
     course_search_by_filters_count,
     course_search_by_similarity,
     course_search_by_similarity_count,
+    course_select_summary,
+    course_insert_view,
+    course_select_most_visited,
 )
+
+
+def get_course_most_visited():
+    last_month = datetime.now() - timedelta(weeks=4)
+    most_visited = course_select_most_visited(
+        3, last_month.isoformat(sep=" ", timespec="seconds")
+    )
+    if len(most_visited) == 0:
+        # no one visited our site in the past month...
+        # so just return the most visited overall (starting from epoch)
+        most_visited = course_select_most_visited(3, "1970-01-01 00:00:00")
+    return {
+        "most_visited": [
+            get_course_reviews_stats(el["department"], el["course_number"])
+            for el in most_visited
+        ]
+    }
+
+
+def get_course_summary(dept, course_number):
+    """
+    Inserts a visit into courses_visits and returns the summary
+    """
+    course_insert_view(dept, course_number)
+    return course_select_summary(dept, course_number)
 
 
 def get_course_reviews_stats(dept, course_number):
