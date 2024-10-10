@@ -1,10 +1,14 @@
-from .utils import fetchone, fetchone_as_dict, fetchall
+from .utils import fetchone, fetchone_as_dict, fetchall, insert
 
 
 # SUMMARY
 def professor_select_summary(professor_id):
     query = "SELECT id, name, email FROM users WHERE id = %s"
     return fetchone_as_dict(query, professor_id)
+
+
+def professor_insert_view(professor_id):
+    insert("professor_visits", {"professor_id": professor_id})
 
 
 # STATS
@@ -122,3 +126,19 @@ def professor_search_by_last_name_count(last_name_start: str):
         name ~ ' {last_name_start}[^\\s]*$'
     """
     return fetchone(sql_query)[0]
+
+
+def professor_select_most_visited(limit: int, start_time: str):
+    """
+    Select the most visited professors that were visited after
+    start_time
+    """
+    query = f"""
+        SELECT professor_id FROM professor_visits
+        WHERE created_at > %s
+        GROUP BY (professor_id) 
+        ORDER BY COUNT(*) DESC
+        LIMIT %s
+    """
+
+    return fetchall(query, start_time, limit)

@@ -33,6 +33,7 @@ urlpatterns = [
     ),
     path("professors/<str:professor_id>/reviews", views.professor_reviews_view),
     path("professors/search", views.professor_search_view),
+    path("professors/most_visited", views.professor_most_visited_view),
     #     ############## schedule search ####################
     path("schedules/search", views.schedule_search_view),
     #     ############## departments paths ####################
