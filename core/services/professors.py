@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta
+
 from core.daos import (
     professor_select_average_rating,
     professor_select_average_quality,
@@ -17,7 +19,34 @@ from core.daos import (
     professor_search_by_similarity_tags,
     professor_search_by_last_name,
     professor_search_by_last_name_count,
+    professor_insert_view,
+    professor_select_summary,
+    professor_select_most_visited,
 )
+
+
+def get_professor_most_visited():
+    last_month = datetime.now() - timedelta(weeks=4)
+    most_visited = professor_select_most_visited(
+        3, last_month.isoformat(sep=" ", timespec="seconds")
+    )
+    if len(most_visited) == 0:
+        # no one visited our site in the past month...
+        # so just return the most visited overall (starting from epoch)
+        most_visited = professor_select_most_visited(3, "1970-01-01 00:00:00")
+    return {
+        "most_visited": [
+            get_professor_reviews_stats(el["professor_id"])
+            | professor_select_summary(el["professor_id"])
+            | {"visits": el["visits"]}
+            for el in most_visited
+        ]
+    }
+
+
+def get_professor_summary(professor_id: str):
+    professor_insert_view(professor_id)
+    return professor_select_summary(professor_id)
 
 
 def get_professor_reviews_stats(professor_id: str):
