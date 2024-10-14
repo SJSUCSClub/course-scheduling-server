@@ -10,6 +10,7 @@ client_secret.json
 course_scheduling/__pycache__/
 __pycache__/
 venv/
+postgres_data/
 
 # secrets
 client_secret.json

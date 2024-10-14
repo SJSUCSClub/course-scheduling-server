@@ -30,7 +30,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = "django-insecure-b3e*^d&x89959p%%#ba8_9u3mmb05wjacta9ew0e^u2&0z-47#"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv("DEBUG", "true").lower() == "true"
 
 LOGGING = {
     "version": 1,
@@ -52,6 +52,7 @@ LOGGING = {
         },
     },
 }
+
 
 def get_env_list(env_name: str):
     tmp = os.getenv(env_name, None)
@@ -75,10 +76,7 @@ ACCOUNT_EMAIL_VERIFICATION = "none"
 if DEBUG:
     CORS_ALLOW_ALL_ORIGINS = True
 else:
-    CORS_ALLOWED_ORIGINS = [
-        "http://localhost:3000/",
-        "http://127.0.0.1:3000/",
-    ]
+    CORS_ALLOWED_ORIGINS = get_env_list("CORS_ALLOWED_ORIGINS") or []
 
 INSTALLED_APPS = [
     "django.contrib.admin",
