@@ -13,7 +13,17 @@ from core.daos import (
     course_search_by_filters_count,
     course_search_by_similarity,
     course_search_by_similarity_count,
+    course_select_highest_rated,
 )
+
+
+def get_course_highest_rated(limit: int, minimum_reviews: int):
+    return {
+        "highest_rated": [
+            el | get_course_reviews_stats(el["department"], el["course_number"])
+            for el in course_select_highest_rated(limit, minimum_reviews)
+        ]
+    }
 
 
 def get_course_reviews_stats(dept, course_number):

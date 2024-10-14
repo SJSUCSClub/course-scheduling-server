@@ -22,6 +22,7 @@ urlpatterns = [
         "courses/<str:department>-<str:course_number>/reviews",
         views.course_reviews_view,
     ),
+    path("courses/highest_rated", views.course_highest_rated_view),
     #     path('courses/<str:course>/reviews/comments', views.review_comments),
     #     ############### professor paths ###################
     path("professors/<str:professor_id>/summary", views.professor_summary_view),
@@ -32,6 +33,7 @@ urlpatterns = [
     ),
     path("professors/<str:professor_id>/reviews", views.professor_reviews_view),
     path("professors/search", views.professor_search_view),
+    path("professors/highest_rated", views.professor_highest_rated_view),
     #     ############## schedule search ####################
     path("schedules/search", views.schedule_search_view),
     #     ############## departments paths ####################
