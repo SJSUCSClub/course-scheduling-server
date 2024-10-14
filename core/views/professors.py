@@ -1,12 +1,14 @@
 from django.http.response import JsonResponse
 from rest_framework.decorators import api_view
 
+from core.constants import DEFAULT_PAGE_LIMIT
 from core.daos import professor_select_summary
 from core.services import (
     get_paginated_schedules_by_professor,
     get_professor_reviews_stats,
     get_paginated_reviews_by_professor,
     get_professor_search_results,
+    get_professor_highest_rated,
 )
 from .utils import validate_user, validate_page_limit, try_response
 
@@ -43,7 +45,7 @@ def professor_reviews_view(request, professor_id):
         professor_id=professor_id,
         **validate_page_limit(request),
         tags=request.GET.getlist("tags"),
-        user_id = validate_user(request)
+        user_id=validate_user(request),
     )
 
     return JsonResponse(json_data)
@@ -59,3 +61,14 @@ def professor_search_view(request):
     )
 
     return JsonResponse(json_data)
+
+
+@api_view(["GET"])
+@try_response
+def professor_highest_rated_view(request):
+    return JsonResponse(
+        get_professor_highest_rated(
+            limit=request.GET.get("limit", DEFAULT_PAGE_LIMIT),
+            minimum_reviews=request.GET.get("minimum_reviews", 50),
+        )
+    )

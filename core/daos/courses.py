@@ -251,3 +251,15 @@ def course_search_by_similarity_count(
         full_query,
         *([query, *list(filter(lambda x: x is not None, args.values()))] * 2),
     )
+
+
+def course_select_highest_rated(limit: int, minimum_reviews: int):
+    query = f"""
+        SELECT c.* FROM
+        courses c LEFT JOIN reviews r ON c.department = r.department AND c.course_number = r.course_number
+        GROUP BY (c.department, c.course_number)
+        HAVING COUNT(*) > %s
+        ORDER BY get_course_average_rating(c.department, c.course_number) DESC
+        LIMIT %s
+    """
+    return fetchall(query, minimum_reviews, limit)

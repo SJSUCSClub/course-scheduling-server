@@ -17,7 +17,17 @@ from core.daos import (
     professor_search_by_similarity_tags,
     professor_search_by_last_name,
     professor_search_by_last_name_count,
+    professor_select_highest_rated,
 )
+
+
+def get_professor_highest_rated(limit: int, minimum_reviews: int):
+    return {
+        "highest_rated": [
+            el | get_professor_reviews_stats(el["id"])
+            for el in professor_select_highest_rated(limit, minimum_reviews)
+        ]
+    }
 
 
 def get_professor_reviews_stats(professor_id: str):

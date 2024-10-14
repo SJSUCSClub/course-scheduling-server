@@ -122,3 +122,15 @@ def professor_search_by_last_name_count(last_name_start: str):
         name ~ ' {last_name_start}[^\\s]*$'
     """
     return fetchone(sql_query)[0]
+
+
+def professor_select_highest_rated(limit: int, minimum_reviews: int = 50):
+    query = f"""
+        SELECT u.* FROM
+        users u LEFT JOIN reviews r ON u.id = r.professor_id
+        GROUP BY u.id
+        HAVING COUNT(*) > %s
+        ORDER BY get_professor_average_rating(u.id) DESC
+        LIMIT %s
+    """
+    return fetchall(query, minimum_reviews, limit)
