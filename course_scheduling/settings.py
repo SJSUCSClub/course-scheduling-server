@@ -76,7 +76,7 @@ ACCOUNT_EMAIL_VERIFICATION = "none"
 if DEBUG:
     CORS_ALLOW_ALL_ORIGINS = True
 else:
-    CORS_ALLOWED_ORIGINS = get_env_list("ALLOWED_HOSTS") or []
+    CORS_ALLOWED_ORIGINS = get_env_list("CORS_ALLOWED_ORIGINS") or []
 
 INSTALLED_APPS = [
     "django.contrib.admin",
