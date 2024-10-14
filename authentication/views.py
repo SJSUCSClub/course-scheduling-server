@@ -101,11 +101,12 @@ def oauth2callback(request):
     last_name = user_info.get("family_name")
     if not email.endswith("@sjsu.edu"):
         return JsonResponse({"error": "Unauthorized email address"}, status=403)
+    id = email.removesuffix("@sjsu.edu")
 
-    user, created = User.objects.get_or_create(email=email)
+    user, created = User.objects.get_or_create(email=email, username=id)
     if created:
         users_insert(
-            id=email.removesuffix("@sjsu.edu"),
+            id=id,
             name=first_name + " " + last_name,
             email=email,
             is_professor=False,
