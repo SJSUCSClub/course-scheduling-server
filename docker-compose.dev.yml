@@ -1,7 +1,7 @@
 name: django-postgres-dev
 services:
   backend:
-    build: 
+    build:
       dockerfile: Dockerfile.dev
     environment:
       - DB_HOST=db
