@@ -35,13 +35,20 @@ class TokenRefreshMiddleware:
 
                 response = self.get_response(request)
                 domain = os.getenv("SESSION_COOKIE_DOMAIN", None)
+                secure = domain is not None
                 response.set_cookie(
-                    "idtoken", new_id_token, httponly=True, domain=domain
+                    "idtoken", new_id_token, httponly=True, domain=domain, secure=secure
                 )
                 response.set_cookie(
-                    "access_token", new_access_token, httponly=True, domain=domain
+                    "access_token",
+                    new_access_token,
+                    httponly=True,
+                    domain=domain,
+                    secure=secure,
                 )
-                response.set_cookie("token_expiration", expires_in, domain=domain)
+                response.set_cookie(
+                    "token_expiration", expires_in, domain=domain, secure=secure
+                )
                 return response
         return self.get_response(request)
 
