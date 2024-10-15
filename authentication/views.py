@@ -59,7 +59,10 @@ def GoogleAuthorize(request: HttpRequest):
     # set a cookie saving the frontend_redirect_uri in the redirect response
     response = redirect(authorization_url)
     domain = os.getenv("SESSION_COOKIE_DOMAIN", None)
-    response.set_cookie("frontend_redirect_uri", frontend_redirect_uri, domain=domain)
+    secure = domain is not None
+    response.set_cookie(
+        "frontend_redirect_uri", frontend_redirect_uri, domain=domain, secure=secure
+    )
     return response
 
 
@@ -122,13 +125,26 @@ def oauth2callback(request):
     login(request, user, backend="django.contrib.auth.backends.ModelBackend")
     response = HttpResponse("blah")
     domain = os.getenv("SESSION_COOKIE_DOMAIN", None)
-    response.set_cookie("idtoken", credentials.id_token, httponly=True, domain=domain)
-    response.set_cookie("access_token", credentials.token, httponly=True, domain=domain)
+    secure = domain is not None
     response.set_cookie(
-        "refresh_token", credentials.refresh_token, httponly=True, domain=domain
+        "idtoken", credentials.id_token, httponly=True, domain=domain, secure=secure
     )
-    response.set_cookie("user_data", json.dumps(user_data), domain=domain)
-    response.set_cookie("token_expiration", expires_in_unix, domain=domain)
+    response.set_cookie(
+        "access_token", credentials.token, httponly=True, domain=domain, secure=secure
+    )
+    response.set_cookie(
+        "refresh_token",
+        credentials.refresh_token,
+        httponly=True,
+        domain=domain,
+        secure=secure,
+    )
+    response.set_cookie(
+        "user_data", json.dumps(user_data), domain=domain, secure=secure
+    )
+    response.set_cookie(
+        "token_expiration", expires_in_unix, domain=domain, secure=secure
+    )
     response["Location"] = frontend_redirect_uri
     response.status_code = 302
     return response
@@ -167,7 +183,12 @@ def RefreshToken(request):
 
     response = JsonResponse({"message": "Refreshed Tokens"}, status=200)
     domain = os.getenv("SESSION_COOKIE_DOMAIN", None)
-    response.set_cookie("idtoken", new_id_token, httponly=True, domain=domain)
-    response.set_cookie("access_token", new_access_token, httponly=True, domain=domain)
-    response.set_cookie("token_expiration", expires_in, domain=domain)
+    secure = domain is not None
+    response.set_cookie(
+        "idtoken", new_id_token, httponly=True, domain=domain, secure=secure
+    )
+    response.set_cookie(
+        "access_token", new_access_token, httponly=True, domain=domain, secure=secure
+    )
+    response.set_cookie("token_expiration", expires_in, domain=domain, secure=secure)
     return response
