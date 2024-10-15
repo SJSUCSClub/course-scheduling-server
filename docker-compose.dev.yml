@@ -1,7 +1,7 @@
 name: django-postgres-dev
 services:
   backend:
-    build: 
+    build:
       dockerfile: Dockerfile.dev
     environment:
       - DB_HOST=db
@@ -13,6 +13,7 @@ services:
       - OAUTHLIB_INSECURE_TRANSPORT=1
       - ALLOWED_HOSTS=${ALLOWED_HOSTS?REQUIRED}
       - FRONTEND_URL=${FRONTEND_URL?REQUIRED}
+      - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY?REQUIRED}
       - DEBUG=true
     depends_on:
       db:

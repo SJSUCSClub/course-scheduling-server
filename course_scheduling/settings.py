@@ -27,7 +27,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-b3e*^d&x89959p%%#ba8_9u3mmb05wjacta9ew0e^u2&0z-47#"
+SECRET_KEY = os.getenv("DJANGO_SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DEBUG", "true").lower() == "true"
@@ -68,7 +68,14 @@ CSRF_TRUSTED_ORIGINS = get_env_list("CSRF_TRUSTED_ORIGINS") or [
     os.getenv("FRONTEND_URL")
 ]
 CSRF_HEADER_NAME = "HTTP_X_CSRFTOKEN"
-
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+SESSION_COOKIE_SAMESITE = "None"
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SAMESITE = "None"
+CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_DOMAIN = os.getenv("SESSION_COOKIE_DOMAIN", None)
+CSRF_COOKIE_DOMAIN = os.getenv("CSRF_COOKIE_DOMAIN", None)
+CORS_ALLOW_CREDENTIALS = True
 
 # Application definition
 ACCOUNT_EMAIL_VERIFICATION = "none"

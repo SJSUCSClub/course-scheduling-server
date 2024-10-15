@@ -43,12 +43,12 @@ def credentials_to_dict(credentials):
 @api_view(["GET"])
 @permission_classes([NotAuthenticatedPermission])
 def GoogleAuthorize(request: HttpRequest):
-    frontend_redirect_uri = request.META.get('HTTP_REFERER')
+    frontend_redirect_uri = request.META.get("HTTP_REFERER")
     flow = google_auth_oauthlib.flow.Flow.from_client_secrets_file(
         CLIENT_SECRETS_FILE, scopes=SCOPES
     )
-    flow.redirect_uri = request.build_absolute_uri(reverse('oauth2callback'))
-    #flow.redirect_uri = f"{os.getenv('FRONTEND_URL')}/django/google/oauth2callback/"
+    flow.redirect_uri = request.build_absolute_uri(reverse("oauth2callback"))
+    # flow.redirect_uri = f"{os.getenv('FRONTEND_URL')}/django/google/oauth2callback/"
     authorization_url, state = flow.authorization_url(
         access_type="offline", include_granted_scopes="true"
     )
@@ -58,8 +58,10 @@ def GoogleAuthorize(request: HttpRequest):
     print("redirect_uri", flow.redirect_uri, file=sys.stderr)
     # set a cookie saving the frontend_redirect_uri in the redirect response
     response = redirect(authorization_url)
-    response.set_cookie("frontend_redirect_uri", frontend_redirect_uri)
+    domain = os.getenv("SESSION_COOKIE_DOMAIN", None)
+    response.set_cookie("frontend_redirect_uri", frontend_redirect_uri, domain=domain)
     return response
+
 
 @api_view(["GET"])
 @permission_classes([NotAuthenticatedPermission])
@@ -72,8 +74,8 @@ def oauth2callback(request):
     flow = google_auth_oauthlib.flow.Flow.from_client_secrets_file(
         CLIENT_SECRETS_FILE, scopes=SCOPES, state=state
     )
-    flow.redirect_uri = request.build_absolute_uri(reverse('oauth2callback'))
-    #flow.redirect_uri = f"{os.getenv('FRONTEND_URL')}/django/google/oauth2callback/"
+    flow.redirect_uri = request.build_absolute_uri(reverse("oauth2callback"))
+    # flow.redirect_uri = f"{os.getenv('FRONTEND_URL')}/django/google/oauth2callback/"
     print("New redirect uri", flow.redirect_uri, file=sys.stderr)
     authorization_response = request.build_absolute_uri()
     print("authorization_response", authorization_response, file=sys.stderr)
@@ -99,11 +101,12 @@ def oauth2callback(request):
     last_name = user_info.get("family_name")
     if not email.endswith("@sjsu.edu"):
         return JsonResponse({"error": "Unauthorized email address"}, status=403)
+    id = email.removesuffix("@sjsu.edu")
 
-    user, created = User.objects.get_or_create(email=email)
+    user, created = User.objects.get_or_create(email=email, username=id)
     if created:
         users_insert(
-            id=email.removesuffix("@sjsu.edu"),
+            id=id,
             name=first_name + " " + last_name,
             email=email,
             is_professor=False,
@@ -118,11 +121,14 @@ def oauth2callback(request):
 
     login(request, user, backend="django.contrib.auth.backends.ModelBackend")
     response = HttpResponse("blah")
-    response.set_cookie("idtoken", credentials.id_token, httponly=True)
-    response.set_cookie("access_token", credentials.token, httponly=True)
-    response.set_cookie("refresh_token", credentials.refresh_token, httponly=True)
-    response.set_cookie("user_data", json.dumps(user_data))
-    response.set_cookie("token_expiration", expires_in_unix)
+    domain = os.getenv("SESSION_COOKIE_DOMAIN", None)
+    response.set_cookie("idtoken", credentials.id_token, httponly=True, domain=domain)
+    response.set_cookie("access_token", credentials.token, httponly=True, domain=domain)
+    response.set_cookie(
+        "refresh_token", credentials.refresh_token, httponly=True, domain=domain
+    )
+    response.set_cookie("user_data", json.dumps(user_data), domain=domain)
+    response.set_cookie("token_expiration", expires_in_unix, domain=domain)
     response["Location"] = frontend_redirect_uri
     response.status_code = 302
     return response
@@ -132,7 +138,7 @@ def oauth2callback(request):
 @permission_classes([AuthenticatedPermission])
 def Logout(request):
     logout(request)
-    frontend_redirect_uri = request.META.get('HTTP_REFERER')
+    frontend_redirect_uri = request.META.get("HTTP_REFERER")
     response = redirect(frontend_redirect_uri)
     delete_cookies = [
         "refresh_token",
@@ -160,7 +166,8 @@ def RefreshToken(request):
     expires_in = time.time() + response_data.get("expires_in")
 
     response = JsonResponse({"message": "Refreshed Tokens"}, status=200)
-    response.set_cookie("idtoken", new_id_token, httponly=True)
-    response.set_cookie("access_token", new_access_token, httponly=True)
-    response.set_cookie("token_expiration", expires_in)
+    domain = os.getenv("SESSION_COOKIE_DOMAIN", None)
+    response.set_cookie("idtoken", new_id_token, httponly=True, domain=domain)
+    response.set_cookie("access_token", new_access_token, httponly=True, domain=domain)
+    response.set_cookie("token_expiration", expires_in, domain=domain)
     return response
