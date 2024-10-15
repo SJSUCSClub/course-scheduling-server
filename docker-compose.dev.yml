@@ -1,7 +1,7 @@
 name: django-postgres-dev
 services:
   backend:
-    build: 
+    build:
       dockerfile: Dockerfile.dev
     environment:
       - DB_HOST=db
@@ -10,6 +10,7 @@ services:
       - DB_PASSWORD=${DB_PASSWORD?REQUIRED}
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID?REQUIRED}
       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET?REQUIRED}
+      - OAUTHLIB_INSECURE_TRANSPORT=1
       - ALLOWED_HOSTS=${ALLOWED_HOSTS?REQUIRED}
       - FRONTEND_URL=${FRONTEND_URL?REQUIRED}
       - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY?REQUIRED}

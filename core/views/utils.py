@@ -23,6 +23,8 @@ def try_response(fn):
 
 
 def validate_user(request: HttpRequest) -> str:
+    if not request.user:
+        return None
     if not request.user.is_authenticated:
         return None
     return request.user.email.removesuffix("@sjsu.edu")
