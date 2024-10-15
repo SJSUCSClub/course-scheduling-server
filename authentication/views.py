@@ -163,8 +163,9 @@ def Logout(request):
         "user_data",
         "token_expiration",
     ]
+    domain = os.getenv("SESSION_COOKIE_DOMAIN", None)
     for cookie in delete_cookies:
-        response.delete_cookie(cookie, path="/")
+        response.delete_cookie(cookie, path="/", domain=domain)
 
     return response
 
