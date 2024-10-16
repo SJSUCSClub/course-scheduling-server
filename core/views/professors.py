@@ -41,11 +41,14 @@ def professor_reviews_stats_view(request, professor_id):
 @api_view(["GET"])
 @try_response
 def professor_reviews_view(request, professor_id):
+
     json_data = get_paginated_reviews_by_professor(
         professor_id=professor_id,
         **validate_page_limit(request),
         tags=request.GET.getlist("tags"),
         user_id=validate_user(request),
+        order_by = request.GET.get('order_by', 'created_at'),
+        sort_order = request.GET.get('sort_order', 'DESC')
     )
 
     return JsonResponse(json_data)

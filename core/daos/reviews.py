@@ -6,6 +6,16 @@ from typing import List, Dict, Union, Literal
 def process_tags(tags: str) -> List[str]:
     return [tag.strip('"{} ') for tag in tags.split(",")]
 
+def sort_reviews_by_likes(query: str, sort_order: str,args):
+    query += """
+        LEFT JOIN user_review_critique urc ON r.id = urc.review_id
+    """
+    query += to_where(**args)
+    query+=f"""
+        GROUP BY r.id, u.name, u.username, p.id, p.name, p.email
+        ORDER BY SUM(CASE WHEN urc.upvote THEN 1 ELSE 0 END) {sort_order}
+    """
+    return query
 
 def reviews_select(
     department: str = None,
@@ -14,6 +24,8 @@ def reviews_select(
     tags: List[str] = [],
     limit: int = None,
     page: int = None,
+    sort_order: str = "DESC",
+    order_by: str = "created_at"
 ):
     """
     Select reviews from the database with any of the given filters
@@ -25,6 +37,8 @@ def reviews_select(
         tags: List[str] - the tags of the review
         limit: int - the number of results to return per page; only effective if page is also provided
         page: int - the 1-indexed page number; only effective if limit is also provided
+        sort_order: str - Sort by descending or ascending
+        order_by: str - Order by an attribute
 
     Returns:
         out: List[dict] - A list of reviews
@@ -32,17 +46,22 @@ def reviews_select(
     args = locals()
     page = args.pop("page")
     limit = args.pop("limit")
+    sort_order = args.pop("sort_order")
+    order_by = args.pop("order_by")
     query = """
         SELECT r.*, u.name AS reviewer_name, u.username AS reviewer_username, p.id AS professor_id, p.name AS professor_name, p.email AS professor_email
         FROM reviews r
         LEFT JOIN users u ON r.user_id = u.id
         INNER JOIN users p ON r.professor_id = p.id
     """
-    query += to_where(**args)
-
+    
+    if order_by == "upvotes":
+        query = sort_reviews_by_likes(query, sort_order, args)
+    else:
+        query += to_where(**args)
+        query += f" ORDER BY r.{order_by} {sort_order}"
     if page and limit:
         query += f" LIMIT {limit} OFFSET {(page - 1 ) * limit}"
-
     ret = fetchall(query, *list(filter(lambda x: x is not None, args.values())))
     for el in ret:
         el["tags"] = process_tags(el["tags"])
