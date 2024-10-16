@@ -11,8 +11,6 @@ from core.daos import (
 def get_paginated_reviews_by_course(
     dept: str, course_number: str, limit: int, page: int, tags=[], user_id=None, order_by = str, sort_order = str
 ):
-    print(order_by)
-    print(sort_order)
     reviews = reviews_select(
         dept,
         course_number,
