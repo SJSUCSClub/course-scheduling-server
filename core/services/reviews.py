@@ -9,7 +9,7 @@ from core.daos import (
 
 
 def get_paginated_reviews_by_course(
-    dept: str, course_number: str, limit: int, page: int, tags=[], user_id=None
+    dept: str, course_number: str, limit: int, page: int, tags=[], user_id=None, order_by = str, sort_order = str
 ):
     reviews = reviews_select(
         dept,
@@ -17,6 +17,8 @@ def get_paginated_reviews_by_course(
         tags=tags,
         limit=limit,
         page=page,
+        order_by=order_by,
+        sort_order=sort_order
     )
 
     for review in reviews:
@@ -41,7 +43,7 @@ def get_paginated_reviews_by_course(
 
 
 def get_paginated_reviews_by_professor(
-    professor_id: str, limit: int, page: int, tags=[], user_id=None
+    professor_id: str, limit: int, page: int, tags=[], user_id=None, order_by = str, sort_order = str
 ):
     """
     Returns a paginated list of reviews for a professor
@@ -53,6 +55,8 @@ def get_paginated_reviews_by_professor(
         tags=tags,
         limit=limit,
         page=page,
+        order_by=order_by,
+        sort_order=sort_order
     )
 
     for review in reviews:
