@@ -8,7 +8,7 @@ from core.daos import (
     user_select_voted_reviews,
     user_voted_review,
 )
-from core.views.utils import format_tags
+from core.services.utils import format_tags
 
 
 def get_user_profile(user_id: str):

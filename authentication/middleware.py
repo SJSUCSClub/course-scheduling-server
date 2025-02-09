@@ -1,11 +1,8 @@
 import requests
 import time
 from django.http import JsonResponse
-from django.urls import reverse
 from authentication.utils.refreshToken import refresh
-from django.shortcuts import redirect
 import os
-from django.http import HttpResponseRedirect
 
 class TokenRefreshMiddleware:
     def __init__(self, get_response):

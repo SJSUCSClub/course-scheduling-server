@@ -34,12 +34,6 @@ def validate_user(request: HttpRequest) -> str:
 def validate_body(request: HttpRequest) -> dict:
     return request.data
 
-def format_tags(tags):
-    # Convert tags list to string
-    tags = str(tags)
-    tags = tags.replace("[","{").replace("]","}").replace("'","\"")
-    return tags
-
 def content_check(content: str):
     return profanity.contains_profanity(content)
 

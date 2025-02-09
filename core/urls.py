@@ -39,7 +39,7 @@ urlpatterns = [
     #     ############## departments paths ####################
     path("departments", views.departments_view),
     #     ############## reviews paths ####################
-    path("reviews/<str:review_id>", views.get_review_view),
+    path("reviews/<str:review_id>", views.get_review_view, name='get_review'),
     path("reviews/<str:review_id>/comments", views.review_comments_view),
     #     ############## users paths ####################
     path("users/profile", views.user_profile),
